@@ -6,7 +6,7 @@ import {
     integer,
     boolean,
     text,
-    primaryKey,
+    
     pgEnum,
   } from "drizzle-orm/pg-core";
   
@@ -39,6 +39,7 @@ import {
     schoolName: varchar("schoolName", { length: 255 }),
     role: roleEnum("role").default("student").notNull(),
     isActive: boolean("isActive").default(true),
+    isInternal: boolean("isInternal").default(true),
     profilePicture: text("profilePicture"),
     bio: text("bio"),
     emailVerified: boolean("emailVerified").default(false),
