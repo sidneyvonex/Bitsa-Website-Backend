@@ -63,6 +63,11 @@ export const users = pgTable("users", {
   bio: text("bio"),
 
   emailVerified: boolean("emailVerified").default(false),
+  // email verification & password reset
+  verificationToken: varchar("verificationToken", { length: 255 }),
+  verificationTokenExpiry: timestamp("verificationTokenExpiry"),
+  resetToken: varchar("resetToken", { length: 255 }),
+  resetTokenExpiry: timestamp("resetTokenExpiry"),
   lastLogin: timestamp("lastLogin"),
 
   createdAt: timestamp("createdAt").defaultNow(),
@@ -280,3 +285,52 @@ export const reports = pgTable("reports", {
 
   createdAt: timestamp("createdAt").defaultNow(),
 });
+
+// -------------------------
+// Type exports (inferred)
+// -------------------------
+
+// 1. Users
+export type TUserInsert = typeof users.$inferInsert;
+export type TUserSelect = typeof users.$inferSelect;
+
+// 2. Interests
+export type TInterestInsert = typeof interests.$inferInsert;
+export type TInterestSelect = typeof interests.$inferSelect;
+
+// 3. User Interests
+export type TUserInterestInsert = typeof userInterests.$inferInsert;
+export type TUserInterestSelect = typeof userInterests.$inferSelect;
+
+// 4. Projects
+export type TProjectInsert = typeof projects.$inferInsert;
+export type TProjectSelect = typeof projects.$inferSelect;
+
+// 5. Leaders
+export type TLeaderInsert = typeof leaders.$inferInsert;
+export type TLeaderSelect = typeof leaders.$inferSelect;
+
+// 6. Communities
+export type TCommunityInsert = typeof communities.$inferInsert;
+export type TCommunitySelect = typeof communities.$inferSelect;
+
+// 7. Blogs
+export type TBlogInsert = typeof blogs.$inferInsert;
+export type TBlogSelect = typeof blogs.$inferSelect;
+
+// 8. Events
+export type TEventInsert = typeof events.$inferInsert;
+export type TEventSelect = typeof events.$inferSelect;
+
+// 9. Gallery
+export type TGalleryInsert = typeof gallery.$inferInsert;
+export type TGallerySelect = typeof gallery.$inferSelect;
+
+// 10. Partners
+export type TPartnerInsert = typeof partners.$inferInsert;
+export type TPartnerSelect = typeof partners.$inferSelect;
+
+// 11. Reports
+export type TReportInsert = typeof reports.$inferInsert;
+export type TReportSelect = typeof reports.$inferSelect;
+
