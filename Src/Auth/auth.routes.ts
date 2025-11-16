@@ -9,20 +9,18 @@ import {
     verifyEmail,
     resendVerificationCode
 } from "./auth.controller";
-import { adminRoleAuth, bothRoleAuth, memberRoleAuth } from "../Middleware/bearAuth";
+import { adminRoleAuth } from "../Middleware/bearAuth";
 
 export const authRouter = Router();
 
 authRouter.post('/auth/register', createUser)
-
-//Swagger documentation for POST
 /**
  * @swagger
  * /auth/register:
  *   post:
  *     summary: Register a new user
- *     description: Creates a new user account
- *     tags: [Users]
+ *     description: Creates a new student account (self-registration)
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -32,70 +30,78 @@ authRouter.post('/auth/register', createUser)
  *     responses:
  *       201:
  *         description: User created successfully
- *       400:
- *         description: Bad request or validation error
- */
-authRouter.post('/auth/login', loginUser);
-//Swagger documentation for POST
-/**
- * @swagger
- * /auth/login:
- *   post:
- *     summary: Logging In a user
- *     description: Authenticates a user and returns a JWT token
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *              email:
- *               type: string
- *               example: "john@example.com"
- *              password:
- *               type: string
- *               example: "password123"
- *     responses:
- *       200:
- *         description: User Logged In successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 token:
+ *                 message:
  *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
- *                 userId:
- *                   type: integer
- *                   example: 1
- *                 email:
- *                   type: string
- *                   example: "john@example.com"
- *                 fullName:
- *                   type: string
- *                   example: "John Doe"
- *                 userRole:
- *                   type: string
- *                   example: "admin"
- *       404:
- *         description: User not found
- *       401:
- *         description: Invalid credentials
- *       500:
- *         description: Failed to login user
+ *                   example: User created successfully
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Bad request or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Email or School ID already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
-// Admin Create User Account
+authRouter.post('/auth/login', loginUser);
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login user
+ *     description: Authenticates a user and returns a JWT token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: User logged in successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
 authRouter.post('/auth/admin/create-user', adminRoleAuth, adminCreateUser);
 /**
  * @swagger
  * /auth/admin/create-user:
  *   post:
  *     summary: Admin creates a user account
- *     description: Allows admin to create a user account with pre-verified email
+ *     description: Allows admin/superadmin to create user accounts with pre-verified email and custom roles
  *     security:
  *       - bearerAuth: []
  *     tags: [Authentication]
@@ -108,116 +114,129 @@ authRouter.post('/auth/admin/create-user', adminRoleAuth, adminCreateUser);
  *     responses:
  *       201:
  *         description: User account created successfully by admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
- *         description: Bad request or validation error
- *       409:
- *         description: Email already exists
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
- *         description: Access denied - Admin role required
+ *         description: Access denied - Admin role required or insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Email or School ID already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
-// Forgot Password
 authRouter.post('/auth/forgot-password', forgotPassword);
 /**
  * @swagger
  * /auth/forgot-password:
  *   post:
  *     summary: Request password reset
- *     description: Sends a password reset email to the user
+ *     description: Sends a password reset email to the user with a reset link
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 example: "user@example.com"
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
  *     responses:
  *       200:
  *         description: Password reset email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
  *         description: Email is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: User with this email does not exist
- *       500:
- *         description: Failed to process forgot password request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
-// Reset Password
 authRouter.post('/auth/reset-password', resetPassword);
 /**
  * @swagger
  * /auth/reset-password:
  *   post:
  *     summary: Reset password with token
- *     description: Resets user password using the token received via email
+ *     description: Resets user password using the token received via email (valid for 1 hour)
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - token
- *               - newPassword
- *             properties:
- *               token:
- *                 type: string
- *                 example: "resetTokenHere"
- *               newPassword:
- *                 type: string
- *                 minLength: 6
- *                 example: "newPassword123"
+ *             $ref: '#/components/schemas/ResetPasswordRequest'
  *     responses:
  *       200:
  *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
- *         description: Invalid or expired token, or password too short
- *       500:
- *         description: Failed to reset password
+ *         description: Invalid or expired token, or password validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
-// Send Email Verification
 authRouter.post('/auth/send-verification', sendEmailVerification);
 /**
  * @swagger
  * /auth/send-verification:
  *   post:
  *     summary: Send email verification
- *     description: Sends an email verification link to the user
+ *     description: Sends an email verification link to the user (valid for 24 hours)
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 example: "user@example.com"
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
  *     responses:
  *       200:
  *         description: Verification email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
  *         description: Email is required or already verified
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: User with this email does not exist
- *       500:
- *         description: Failed to send verification email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
-// Verify Email
 authRouter.post('/auth/verify-email', verifyEmail);
 /**
  * @swagger
@@ -231,51 +250,53 @@ authRouter.post('/auth/verify-email', verifyEmail);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - token
- *             properties:
- *               token:
- *                 type: string
- *                 example: "verificationTokenHere"
+ *             $ref: '#/components/schemas/VerifyEmailRequest'
  *     responses:
  *       200:
  *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
  *         description: Invalid or expired verification token
- *       500:
- *         description: Failed to verify email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 
-// Resend Verification Code
 authRouter.post('/auth/resend-verification', resendVerificationCode);
 /**
  * @swagger
  * /auth/resend-verification:
  *   post:
  *     summary: Resend verification code
- *     description: Resends email verification code to the user
+ *     description: Resends email verification link to the user
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 example: "user@example.com"
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
  *     responses:
  *       200:
  *         description: New verification code sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
  *         description: Email is required or already verified
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: User with this email does not exist
- *       500:
- *         description: Failed to resend verification code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */

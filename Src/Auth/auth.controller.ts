@@ -3,34 +3,22 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createUserService, getUserByEmailService, getUserByIdService, updateEmailVerificationService, storePasswordResetTokenService, getUserByResetTokenService, updateUserPasswordService, storeEmailVerificationTokenService, getUserByVerificationTokenService, generateSecureToken } from "./auth.service";
 import { loginValidator, userValidator } from "../Validation/user.validator";
-import { sendWelcomeEmail, sendPasswordResetEmail, sendAccountVerificationEmail, sendPasswordResetEmail as _unused, sendPasswordResetEmail as _unused2 } from "../Emails/emailService";
+import { sendWelcomeEmail, sendPasswordResetEmail, sendAccountVerificationEmail } from "../Emails/emailService";
 import { getPasswordResetSuccessEmail, getEmailVerificationSuccessEmail } from "../Emails/emailTemplates";
 import { sendEventEmail } from "../Middleware/googleMailer";
 
-// Small adapters for the legacy controller expectations
-const sendPasswordResetSuccessEmail = async (data: { recipientEmail: string; recipientName: string }) => {
-    const tpl = getPasswordResetSuccessEmail(data.recipientName);
-    return sendEventEmail(data.recipientEmail, data.recipientName, tpl.subject, tpl.body);
-};
-
-const sendEmailVerificationSuccessEmail = async (data: { recipientEmail: string; recipientName: string }) => {
-    const tpl = getEmailVerificationSuccessEmail(data.recipientName);
-    return sendEventEmail(data.recipientEmail, data.recipientName, tpl.subject, tpl.body);
-};
-
-
 export const createUser = async (req: Request, res: Response) => {
-
     try {
         const parseResult = userValidator.safeParse(req.body)
         if (!parseResult.success) {
             res.status(400).json({ error: parseResult.error.issues })
             return;
         }
-        const { firstName, lastName, email, password, schoolId, schoolName, yearOfStudy, userRole, major } = req.body; //destructuring the request body
+        const { firstName, lastName, email, password, schoolId, schoolName, yearOfStudy, major } = req.body;
+        
         if (!firstName || !lastName || !email || !password || !schoolId || !major) {
             res.status(400).json({ error: "firstName, lastName, email, password, schoolId and major are required" });
-            return; // Prevent further execution
+            return;
         }
 
         const existingUser = await getUserByEmailService(email);
@@ -38,27 +26,23 @@ export const createUser = async (req: Request, res: Response) => {
             res.status(409).json({ error: "Email already exists" });
             return;
         }
-        // prevent duplicate schoolId
+
         const existingBySchoolId = await getUserByIdService(schoolId);
         if (existingBySchoolId) {
             res.status(409).json({ error: "School ID already exists" });
             return;
         }
 
-        //generate hashed password
-
         const saltRounds = 12;
-        const salt = bcrypt.genSaltSync(saltRounds); // Generate a salt with 12 rounds
-        const hashedPassword = bcrypt.hashSync(password, salt); // Hash the password with the generated salt
+        const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(saltRounds));
 
-        // console.log("🌟 ~ createUser ~ hashedPassword:", hashedPassword)
-
-        // generate a simple schoolId and default yearOfStudy if missing
-        // Use provided schoolId and default schoolName
         const yOfStudy = yearOfStudy ? Number(yearOfStudy) : 1;
         const defaultSchoolName = 'University of Eastern Africa Baraton';
 
-        // Force self-registered users to 'student' role regardless of supplied userRole
+        // Valid major enum values
+        const validMajors = ["Software Engineering", "Computer Science", "Networking", "Cybersecurity", "BBIT", "Data Science", "Other"];
+        const isValidMajor = validMajors.includes(major);
+
         const newUser = await createUserService({
             schoolId,
             isInternal: false,
@@ -67,82 +51,67 @@ export const createUser = async (req: Request, res: Response) => {
             passwordHash: hashedPassword,
             firstName,
             lastName,
-            major,
+            major: isValidMajor ? major : "Other",
+            customMajor: isValidMajor ? undefined : major,
             yearOfStudy: yOfStudy,
             role: 'student',
-            emailVerified: false,
-        }); // Call the service to create a new user
+        });
 
-        // Get the created user to send welcome email
-        const createdUser = await getUserByEmailService(email);
-        if (createdUser) {
-            // Send welcome email
-            await sendWelcomeEmail({
-                recipientEmail: email,
-                recipientName: `${firstName} ${lastName}`
-            });
-        }
+        await sendWelcomeEmail({
+            recipientEmail: email,
+            recipientName: `${firstName} ${lastName}`
+        });
 
-        res.status(201).json({ message: "User created successfully", user: newUser }); // Respond with success message
-
-        // console.log("🌟 ~ createUser ~ newUser:", newUser)
-
+        res.status(201).json({ message: "User created successfully", user: newUser });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to create user" });
     }
 }
 
-//Login User 
 export const loginUser = async (req: Request, res: Response) => {
-    const user = req.body; // Get user credentials from request body
-
     try {
         const parseResult = loginValidator.safeParse(req.body)
         if (!parseResult.success) {
             res.status(400).json({ error: parseResult.error.issues })
             return;
         }
-        const existingUser = await getUserByEmailService(user.email);
 
+        const existingUser = await getUserByEmailService(req.body.email);
         if (!existingUser) {
             res.status(404).json({ error: "User not found" });
-            return; // Prevent further execution
+            return;
         }
-        // Compare the provided password with the hashed password in the database
-        const isMatch = bcrypt.compareSync(user.password, existingUser.passwordHash)
+
+        const isMatch = bcrypt.compareSync(req.body.password, existingUser.passwordHash)
         if (!isMatch) {
             res.status(401).json({ error: "Invalid credentials" });
-            return; // Prevent further execution
+            return;
         }
 
-        //Genertae Token
-
-        //payload- claims of the user
-        let payload = {
+        const payload = {
             userId: existingUser.schoolId,
             email: existingUser.email,
             fullName: `${existingUser.firstName} ${existingUser.lastName}`,
             userRole: existingUser.role,
-
-            //Expire
-            exp: Math.floor(Date.now() / 1000) + (60 * 60), // Token expires in 1 hour
+            exp: Math.floor(Date.now() / 1000) + (60 * 60),
         }
-
-        let secret = process.env.JWT_SECRET as string; // Get the secret from environment variables
-
-
-        let token = jwt.sign(payload, secret); // Sign the token with the payload and secret
-
-        res.status(200).json({ token, userId: existingUser.schoolId, email: existingUser.email, fullName: `${existingUser.firstName} ${existingUser.lastName}`, userRole: existingUser.role, profileUrl: existingUser.profilePicture }); // Respond with success message and token
-
-
+        
+        const secret = process.env.JWT_SECRET as string;
+        const token = jwt.sign(payload, secret);
+        
+        res.status(200).json({ 
+            token, 
+            userId: existingUser.schoolId, 
+            email: existingUser.email, 
+            fullName: `${existingUser.firstName} ${existingUser.lastName}`, 
+            userRole: existingUser.role, 
+            profileUrl: existingUser.profilePicture 
+        });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to login user" });
     }
-
 }
 
-// Admin Create User Account
 export const adminCreateUser = async (req: Request, res: Response) => {
     try {
         const parseResult = userValidator.safeParse(req.body)
@@ -150,8 +119,9 @@ export const adminCreateUser = async (req: Request, res: Response) => {
             res.status(400).json({ error: parseResult.error.issues })
             return;
         }
-
+        
         const { firstName, lastName, email, password, schoolId, schoolName, yearOfStudy, userRole, major } = req.body;
+        
         if (!firstName || !lastName || !email || !password || !schoolId || !major) {
             res.status(400).json({ error: "firstName, lastName, email, password, schoolId and major are required" });
             return;
@@ -162,24 +132,22 @@ export const adminCreateUser = async (req: Request, res: Response) => {
             res.status(409).json({ error: "Email already exists" });
             return;
         }
-        // prevent duplicate schoolId
+
         const existingBySchoolIdAdmin = await getUserByIdService(schoolId);
         if (existingBySchoolIdAdmin) {
             res.status(409).json({ error: "School ID already exists" });
             return;
         }
 
-        // Generate hashed password
         const saltRounds = 12;
-        const salt = bcrypt.genSaltSync(saltRounds);
-        const hashedPassword = bcrypt.hashSync(password, salt);
+        const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(saltRounds));
 
         const yOfStudy = yearOfStudy ? Number(yearOfStudy) : 1;
         const defaultSchoolName = 'University of Eastern Africa Baraton(UEAB)';
 
-        // If attempting to create a 'superadmin', ensure the requester is 'superadmin'
         const requestedRole = (userRole || 'student').toLowerCase();
         const creatorRole = (req.user?.userRole || '').toLowerCase();
+        
         if (requestedRole === 'superadmin' && creatorRole !== 'superadmin') {
             res.status(403).json({ error: 'Only a superadmin can create a superadmin account' });
             return;
@@ -196,10 +164,9 @@ export const adminCreateUser = async (req: Request, res: Response) => {
             passwordHash: hashedPassword,
             yearOfStudy: yOfStudy,
             role: userRole || 'student',
-            emailVerified: true, // Admin created accounts are pre-verified
+            emailVerified: true,
         });
 
-        // Send welcome email
         await sendWelcomeEmail({
             recipientEmail: email,
             recipientName: `${firstName} ${lastName}`
@@ -207,19 +174,16 @@ export const adminCreateUser = async (req: Request, res: Response) => {
 
         res.status(201).json({
             message: "User account created successfully by admin",
-            user: { firstName, lastName, email, userRole: userRole || 'user' }
+            user: { firstName, lastName, email, userRole: userRole || 'student' }
         });
-
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to create user account" });
     }
 }
 
-// Forgot Password
 export const forgotPassword = async (req: Request, res: Response) => {
     try {
         const { email } = req.body;
-
         if (!email) {
             res.status(400).json({ error: "Email is required" });
             return;
@@ -231,17 +195,13 @@ export const forgotPassword = async (req: Request, res: Response) => {
             return;
         }
 
-        // Generate reset token
         const resetToken = generateSecureToken();
-        const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+        const resetTokenExpiry = new Date(Date.now() + 3600000);
 
-        // Store reset token
         await storePasswordResetTokenService(email, resetToken, resetTokenExpiry);
 
-        // Create reset URL
         const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
-        // Send password reset email
         await sendPasswordResetEmail({
             recipientEmail: email,
             recipientName: `${user.firstName} ${user.lastName}`
@@ -250,17 +210,15 @@ export const forgotPassword = async (req: Request, res: Response) => {
         res.status(200).json({
             message: "Password reset email sent successfully. Please check your email."
         });
-
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to process forgot password request" });
     }
 }
 
-// Reset Password
 export const resetPassword = async (req: Request, res: Response) => {
     try {
         const { token, newPassword } = req.body;
-
+        
         if (!token || !newPassword) {
             res.status(400).json({ error: "Token and new password are required" });
             return;
@@ -271,47 +229,36 @@ export const resetPassword = async (req: Request, res: Response) => {
             return;
         }
 
-        // Find user by reset token
         const user = await getUserByResetTokenService(token);
         if (!user) {
             res.status(400).json({ error: "Invalid or expired reset token" });
             return;
         }
 
-        // Check if token is expired
         if (user.resetTokenExpiry && user.resetTokenExpiry < new Date()) {
             res.status(400).json({ error: "Reset token has expired" });
             return;
         }
 
-        // Hash new password
         const saltRounds = 12;
-        const salt = bcrypt.genSaltSync(saltRounds);
-        const hashedPassword = bcrypt.hashSync(newPassword, salt);
+        const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync(saltRounds));
 
-        // Update password and clear reset token
         await updateUserPasswordService(user.schoolId, hashedPassword);
 
-        // Send password reset success confirmation email
-        await sendPasswordResetSuccessEmail({
-            recipientEmail: user.email,
-            recipientName: `${user.firstName} ${user.lastName}`
-        });
+        const tpl = getPasswordResetSuccessEmail(user.firstName);
+        await sendEventEmail(user.email, `${user.firstName} ${user.lastName}`, tpl.subject, tpl.body);
 
         res.status(200).json({
             message: "Password reset successfully. A confirmation email has been sent to your email address."
         });
-
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to reset password" });
     }
 }
 
-// Send Email Verification
 export const sendEmailVerification = async (req: Request, res: Response) => {
     try {
         const { email } = req.body;
-
         if (!email) {
             res.status(400).json({ error: "Email is required" });
             return;
@@ -328,17 +275,13 @@ export const sendEmailVerification = async (req: Request, res: Response) => {
             return;
         }
 
-        // Generate verification token
         const verificationToken = generateSecureToken();
-        const verificationTokenExpiry = new Date(Date.now() + 24 * 3600000); // 24 hours from now
+        const verificationTokenExpiry = new Date(Date.now() + 24 * 3600000);
 
-        // Store verification token
         await storeEmailVerificationTokenService(user.schoolId, verificationToken, verificationTokenExpiry);
 
-        // Create verification URL
         const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
 
-        // Send verification email
         await sendAccountVerificationEmail({
             recipientEmail: email,
             recipientName: `${user.firstName} ${user.lastName}`
@@ -347,61 +290,47 @@ export const sendEmailVerification = async (req: Request, res: Response) => {
         res.status(200).json({
             message: "Verification email sent successfully. Please check your email."
         });
-
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to send verification email" });
     }
 }
 
-// Verify Email
 export const verifyEmail = async (req: Request, res: Response) => {
     try {
         const { token } = req.body;
-
         if (!token) {
             res.status(400).json({ error: "Verification token is required" });
             return;
         }
 
-        // Find user by verification token
         const user = await getUserByVerificationTokenService(token);
         if (!user) {
             res.status(400).json({ error: "Invalid or expired verification token" });
             return;
         }
 
-        // Check if token is expired
         if (user.verificationTokenExpiry && user.verificationTokenExpiry < new Date()) {
             res.status(400).json({ error: "Verification token has expired" });
             return;
         }
 
-        // Update email verification status
         await updateEmailVerificationService(user.schoolId, true);
-
-        // Clear verification token
         await storeEmailVerificationTokenService(user.schoolId, '', new Date());
 
-        // Send email verification success confirmation email
-        await sendEmailVerificationSuccessEmail({
-            recipientEmail: user.email,
-            recipientName: `${user.firstName} ${user.lastName}`
-        });
+        const tpl = getEmailVerificationSuccessEmail(user.firstName);
+        await sendEventEmail(user.email, `${user.firstName} ${user.lastName}`, tpl.subject, tpl.body);
 
         res.status(200).json({
-            message: "Email verified successfully! A confirmation email has been sent. You can now log in and enjoy full access to TicKenya."
+            message: "Email verified successfully! A confirmation email has been sent. You can now log in and enjoy full access to Bitsa."
         });
-
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to verify email" });
     }
 }
 
-// Resend Verification Code
 export const resendVerificationCode = async (req: Request, res: Response) => {
     try {
         const { email } = req.body;
-
         if (!email) {
             res.status(400).json({ error: "Email is required" });
             return;
@@ -418,17 +347,13 @@ export const resendVerificationCode = async (req: Request, res: Response) => {
             return;
         }
 
-        // Generate new verification token
         const verificationToken = generateSecureToken();
-        const verificationTokenExpiry = new Date(Date.now() + 24 * 3600000); // 24 hours from now
+        const verificationTokenExpiry = new Date(Date.now() + 24 * 3600000);
 
-        // Store new verification token
         await storeEmailVerificationTokenService(user.schoolId, verificationToken, verificationTokenExpiry);
 
-        // Create verification URL
         const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
 
-        // Send verification email
         await sendAccountVerificationEmail({
             recipientEmail: email,
             recipientName: `${user.firstName} ${user.lastName}`
@@ -437,7 +362,6 @@ export const resendVerificationCode = async (req: Request, res: Response) => {
         res.status(200).json({
             message: "New verification code sent successfully. Please check your email."
         });
-
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to resend verification code" });
     }

@@ -8,6 +8,7 @@ import {pgTable,varchar,uuid,timestamp,integer,boolean,text,primaryKey,pgEnum,} 
 
 export const majorEnum = pgEnum("majorEnum", [
   "Software Engineering",
+  "Computer Science",
   "Networking",
   "Cybersecurity",
   "BBIT",
@@ -30,7 +31,7 @@ export const roleEnum = pgEnum("roleEnum", [
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   schoolId: varchar("schoolId", { length: 50 }).notNull().unique(),
-  isInternal: boolean("isInternal").default(true),
+  isInternal: boolean("isInternal").default(false).notNull(),
   schoolName: varchar("schoolName", { length: 255 }),
 
   email: varchar("email", { length: 255 }).notNull().unique(),
@@ -45,12 +46,12 @@ export const users = pgTable("users", {
   yearOfStudy: integer("yearOfStudy").notNull(),
 
   role: roleEnum("role").default("student").notNull(),
-  isActive: boolean("isActive").default(true),
+  isActive: boolean("isActive").default(true).notNull(),
 
   profilePicture: text("profilePicture"),
   bio: text("bio"),
 
-  emailVerified: boolean("emailVerified").default(false),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
   // email verification & password reset
   verificationToken: varchar("verificationToken", { length: 255 }),
   verificationTokenExpiry: timestamp("verificationTokenExpiry"),
@@ -58,8 +59,8 @@ export const users = pgTable("users", {
   resetTokenExpiry: timestamp("resetTokenExpiry"),
   lastLogin: timestamp("lastLogin"),
 
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 //

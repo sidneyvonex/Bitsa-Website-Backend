@@ -1,42 +1,57 @@
-// Simple demo email templates — return { subject, body }
-export const getWelcomeTemplate = (name: string) => {
-    const subject = `Welcome to Bitsa, ${name}`;
-    const body = `
-    <div style="font-family: Arial, Helvetica, sans-serif; color:#0f172a;">
-      <h1 style="color:#0f766e">Welcome, ${name} 👋</h1>
-      <p>Thanks for joining Bitsa. We're excited to have you on board.</p>
-      <p style="margin-top:20px">Get started by visiting your dashboard.</p>
-      <p style="color:#64748b; font-size:12px">If you didn't sign up, ignore this email.</p>
+export interface EmailTemplate {
+    subject: string;
+    body: string;
+}
+
+export const getWelcomeTemplate = (name: string): EmailTemplate => {
+    return {
+        subject: `Welcome to Bitsa, ${name}!`,
+        body: `
+    <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:0 auto; padding:20px;">
+      <h2 style="color:#000; font-weight:normal;">Welcome to Bitsa, ${name}</h2>
+      <p style="line-height:1.6;">Thank you for joining Bitsa. We're excited to have you as part of our tech community.</p>
+      <p style="line-height:1.6;">You can now browse events, connect with other students, and showcase your projects.</p>
+      <p style="line-height:1.6; margin-top:30px;">Best regards,<br/>The Bitsa Team</p>
     </div>
-  `;
-    return { subject, body };
+  `,
+    };
 };
 
-export const getPasswordResetTemplate = (name: string, resetUrl: string) => {
-    const subject = `Reset your Bitsa password`;
-    const body = `
-    <div style="font-family: Arial, Helvetica, sans-serif; color:#0f172a;">
-      <h2 style="color:#0f766e">Password reset requested</h2>
-      <p>Hi ${name},</p>
-      <p>Click the button below to reset your password. This link expires in 1 hour.</p>
-      <p><a href="${resetUrl}" style="background:#0f766e;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">Reset Password</a></p>
-      <p style="color:#64748b; font-size:12px">If you didn't request this, safely ignore this email.</p>
+export const getPasswordResetTemplate = (name: string, resetUrl: string): EmailTemplate => {
+    return {
+        subject: `Reset Your Bitsa Password`,
+        body: `
+    <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:0 auto; padding:20px;">
+      <h2 style="color:#000; font-weight:normal;">Reset Your Password</h2>
+      <p style="line-height:1.6;">Hi ${name},</p>
+      <p style="line-height:1.6;">We received a request to reset your password. Click the link below to reset it:</p>
+      <p style="margin:30px 0;">
+        <a href="${resetUrl}" style="color:#0066cc; text-decoration:none;">Reset Password</a>
+      </p>
+      <p style="line-height:1.6; color:#666; font-size:14px;">This link expires in 1 hour.</p>
+      <p style="line-height:1.6; color:#666; font-size:14px;">If you didn't request this, you can safely ignore this email.</p>
+      <p style="line-height:1.6; margin-top:30px;">Best regards,<br/>The Bitsa Team</p>
     </div>
-  `;
-    return { subject, body };
+  `,
+    };
 };
 
-export const getAccountVerificationTemplate = (name: string, verifyUrl: string) => {
-    const subject = `Confirm your email for Bitsa`;
-    const body = `
-    <div style="font-family: Arial, Helvetica, sans-serif; color:#0f172a;">
-      <h2 style="color:#0f766e">Verify your email</h2>
-      <p>Hi ${name},</p>
-      <p>Click the button to verify your email and complete setup.</p>
-      <p><a href="${verifyUrl}" style="background:#0f766e;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">Verify Email</a></p>
+export const getAccountVerificationTemplate = (name: string, verifyUrl: string): EmailTemplate => {
+    return {
+        subject: `Verify Your Bitsa Account`,
+        body: `
+    <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:0 auto; padding:20px;">
+      <h2 style="color:#000; font-weight:normal;">Verify Your Email</h2>
+      <p style="line-height:1.6;">Hi ${name},</p>
+      <p style="line-height:1.6;">Please verify your email address to complete your registration:</p>
+      <p style="margin:30px 0;">
+        <a href="${verifyUrl}" style="color:#0066cc; text-decoration:none;">Verify Email Address</a>
+      </p>
+      <p style="line-height:1.6; color:#666; font-size:14px;">This link expires in 24 hours.</p>
+      <p style="line-height:1.6; margin-top:30px;">Best regards,<br/>The Bitsa Team</p>
     </div>
-  `;
-    return { subject, body };
+  `,
+    };
 };
 
 export const getBookingConfirmationTemplate = (
@@ -48,392 +63,82 @@ export const getBookingConfirmationTemplate = (
     quantity: number,
     total: number,
     bookingId: number
-) => {
-    const subject = `Booking confirmed — ${eventTitle}`;
-    const body = `
-    <div style="font-family: Arial, Helvetica, sans-serif; color:#0f172a;">
-      <h2 style="color:#0f766e">Booking Confirmed</h2>
-      <p>Hi ${name},</p>
-      <p>Your booking for <strong>${eventTitle}</strong> at <strong>${venueName}</strong> is confirmed.</p>
-      <ul>
-        <li>Date: ${date}</li>
-        <li>Time: ${time}</li>
-        <li>Tickets: ${quantity}</li>
-        <li>Total: $${total}</li>
-        <li>Booking ID: #${bookingId}</li>
-      </ul>
-    </div>
-  `;
-    return { subject, body };
-};
-
-export const getPaymentConfirmationTemplate = (name: string, eventTitle: string, amount: number, transactionId: string) => {
-    const subject = `Payment received — ${eventTitle}`;
-    const body = `
-    <div style="font-family: Arial, Helvetica, sans-serif; color:#0f172a;">
-      <h2 style="color:#0f766e">Payment Successful</h2>
-      <p>Hi ${name},</p>
-      <p>We received your payment of <strong>$${amount}</strong> for <strong>${eventTitle}</strong>.</p>
-      <p>Transaction ID: <code>${transactionId}</code></p>
-    </div>
-  `;
-    return { subject, body };
-};
-// Email Templates for TicKenya Event Ticketing System
-
-export interface EmailTemplate {
-    subject: string;
-    body: string;
-}
-
-// User Welcome Email
-export const getUserWelcomeEmail = (name: string): EmailTemplate => {
-    return {
-        subject: "Welcome to TicKenya!",
-        body: `
-      <p>Dear ${name},</p>
-      <p>Welcome to TicKenya - your premier destination for event tickets and venue bookings!</p>
-      <p>You can now:</p>
-      <ul>
-        <li>Browse and book tickets for amazing events</li>
-        <li>Manage your bookings and view event details</li>
-        <li>Access your digital tickets instantly</li>
-        <li>Receive notifications about upcoming events</li>
-        <li>Enjoy exclusive member discounts</li>
-      </ul>
-      <p>We're excited to help you discover incredible events and create unforgettable memories!</p>
-      <p>Happy booking!</p>
-    `,
-    };
-};
-
-// Booking Confirmation Email
-export const getBookingConfirmationEmail = (
-    name: string,
-    eventTitle: string,
-    venueName: string,
-    eventDate: string,
-    eventTime: string,
-    quantity: number,
-    totalAmount: number,
-    bookingId: number
 ): EmailTemplate => {
     return {
         subject: `Booking Confirmed: ${eventTitle}`,
         body: `
-      <p>Dear ${name},</p>
-      <h3>Your booking has been confirmed!</h3>
-      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h4 style="color: #6366f1; margin-top: 0;">Event Details:</h4>
-        <p><strong>Event:</strong> ${eventTitle}</p>
-        <p><strong>Venue:</strong> ${venueName}</p>
-        <p><strong>Date:</strong> ${eventDate}</p>
-        <p><strong>Time:</strong> ${eventTime}</p>
-        <p><strong>Tickets:</strong> ${quantity}</p>
-        <p><strong>Total Amount:</strong> KSh ${totalAmount}</p>
-        <p><strong>Booking ID:</strong> #${bookingId}</p>
+    <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:0 auto; padding:20px;">
+      <h2 style="color:#000; font-weight:normal;">Booking Confirmed</h2>
+      <p style="line-height:1.6;">Hi ${name},</p>
+      <p style="line-height:1.6;">Your booking for <strong>${eventTitle}</strong> has been confirmed.</p>
+      <div style="margin:20px 0; padding:15px; background:#f9f9f9; border-radius:4px;">
+        <p style="margin:5px 0;"><strong>Event:</strong> ${eventTitle}</p>
+        <p style="margin:5px 0;"><strong>Venue:</strong> ${venueName}</p>
+        <p style="margin:5px 0;"><strong>Date:</strong> ${date}</p>
+        <p style="margin:5px 0;"><strong>Time:</strong> ${time}</p>
+        <p style="margin:5px 0;"><strong>Tickets:</strong> ${quantity}</p>
+        <p style="margin:5px 0;"><strong>Total:</strong> KSh ${total}</p>
+        <p style="margin:5px 0;"><strong>Booking ID:</strong> #${bookingId}</p>
       </div>
-      <p><strong>Important:</strong> Please save this email as your booking confirmation. Present your booking ID at the venue entrance.</p>
-      <p>We look forward to seeing you at the event.</p>
-    `,
+      <p style="line-height:1.6;">Please present your booking ID at the venue entrance.</p>
+      <p style="line-height:1.6; margin-top:30px;">Best regards,<br/>The Bitsa Team</p>
+    </div>
+  `,
     };
 };
 
-// Payment Confirmation Email
-export const getPaymentConfirmationEmail = (
-    name: string,
-    eventTitle: string,
-    amount: number,
-    paymentMethod: string,
+export const getPaymentConfirmationTemplate = (
+    name: string, 
+    eventTitle: string, 
+    amount: number, 
     transactionId: string
 ): EmailTemplate => {
     return {
         subject: `Payment Confirmed: ${eventTitle}`,
         body: `
-      <p>Dear ${name},</p>
-      <h3>Payment Successfully Processed</h3>
-      <p>Your payment for <strong>${eventTitle}</strong> has been successfully processed.</p>
-      <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
-        <h4 style="color: #0ea5e9; margin-top: 0;">Payment Details:</h4>
-        <p><strong>Amount Paid:</strong> KSh ${amount}</p>
-        <p><strong>Payment Method:</strong> ${paymentMethod}</p>
-        <p><strong>Transaction ID:</strong> ${transactionId}</p>
-        <p><strong>Payment Date:</strong> ${new Date().toLocaleDateString()}</p>
+    <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:0 auto; padding:20px;">
+      <h2 style="color:#000; font-weight:normal;">Payment Successful</h2>
+      <p style="line-height:1.6;">Hi ${name},</p>
+      <p style="line-height:1.6;">We received your payment for <strong>${eventTitle}</strong>.</p>
+      <div style="margin:20px 0; padding:15px; background:#f9f9f9; border-radius:4px;">
+        <p style="margin:5px 0;"><strong>Amount:</strong> KSh ${amount}</p>
+        <p style="margin:5px 0;"><strong>Transaction ID:</strong> ${transactionId}</p>
+        <p style="margin:5px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
       </div>
-      <p>Your tickets are now confirmed and ready for use.</p>
-      <p>Thank you for using TicKenya.</p>
-    `,
+      <p style="line-height:1.6;">Your tickets are now confirmed.</p>
+      <p style="line-height:1.6; margin-top:30px;">Best regards,<br/>The Bitsa Team</p>
+    </div>
+  `,
     };
 };
 
-// Password Reset Email
-export const getPasswordResetEmail = (
-    name: string,
-    resetUrl: string
-): EmailTemplate => {
+export const getPasswordResetSuccessEmail = (name: string): EmailTemplate => {
     return {
-        subject: "Reset Your TicKenya Password",
+        subject: "Password Reset Successful",
         body: `
-      <p>Dear ${name},</p>
-      <h3>Password Reset Request</h3>
-      <p>We received a request to reset your password for your TicKenya account.</p>
-      <p>Click the button below to reset your password:</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${resetUrl}" style="background-color: #6366f1; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Reset Password</a>
-      </div>
-      <p>Or copy and paste this link into your browser:</p>
-      <p style="word-break: break-all; background-color: #f3f4f6; padding: 15px; border-radius: 6px; font-family: monospace;">${resetUrl}</p>
-      <p><strong>This link will expire in 1 hour for security reasons.</strong></p>
-      <p>If you didn't request this password reset, please ignore this email or contact our support team.</p>
-    `,
+    <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:0 auto; padding:20px;">
+      <h2 style="color:#000; font-weight:normal;">Password Reset Successful</h2>
+      <p style="line-height:1.6;">Hi ${name},</p>
+      <p style="line-height:1.6;">Your password has been successfully reset.</p>
+      <p style="line-height:1.6;">You can now log in to your Bitsa account using your new password.</p>
+      <p style="line-height:1.6; color:#d32f2f; margin-top:20px;">If you didn't make this change, please contact us immediately.</p>
+      <p style="line-height:1.6; margin-top:30px;">Best regards,<br/>The Bitsa Team</p>
+    </div>
+  `,
     };
 };
 
-// Account Verification Email
-export const getAccountVerificationEmail = (
-    name: string,
-    verificationUrl: string
-): EmailTemplate => {
+export const getEmailVerificationSuccessEmail = (name: string): EmailTemplate => {
     return {
-        subject: "Verify Your TicKenya Account",
+        subject: "Email Verified Successfully",
         body: `
-      <p>Dear ${name},</p>
-      <h3>Welcome to TicKenya!</h3>
-      <p>Thank you for creating an account with TicKenya. To complete your registration, please verify your email address.</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${verificationUrl}" style="background-color: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Verify Email Address</a>
-      </div>
-      <p>Or copy and paste this link into your browser:</p>
-      <p style="word-break: break-all; background-color: #f3f4f6; padding: 15px; border-radius: 6px; font-family: monospace;">${verificationUrl}</p>
-      <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-        <h4 style="color: #059669; margin-top: 0;">Once verified, you'll be able to:</h4>
-        <ul style="color: #065f46;">
-          <li>Browse and book tickets for events</li>
-          <li>Manage your bookings and view history</li>
-          <li>Receive event notifications and updates</li>
-          <li>Access exclusive member offers and discounts</li>
-          <li>Rate and review events you've attended</li>
-        </ul>
-      </div>
-      <p>We're excited to have you join the TicKenya community.</p>
-    `,
-    };
-};
-
-// Event Reminder Email
-export const getEventReminderEmail = (
-    name: string,
-    eventTitle: string,
-    venueName: string,
-    eventDate: string,
-    eventTime: string,
-    bookingId: number
-): EmailTemplate => {
-    return {
-        subject: `Event Reminder: ${eventTitle} - Tomorrow!`,
-        body: `
-      <p>Dear ${name},</p>
-      <h3>Don't Forget - Your Event is Tomorrow</h3>
-      <p>This is a friendly reminder that you have an upcoming event:</p>
-      <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-        <h4 style="color: #d97706; margin-top: 0;">Event Details:</h4>
-        <p><strong>Event:</strong> ${eventTitle}</p>
-        <p><strong>Venue:</strong> ${venueName}</p>
-        <p><strong>Date:</strong> ${eventDate}</p>
-        <p><strong>Time:</strong> ${eventTime}</p>
-        <p><strong>Booking ID:</strong> #${bookingId}</p>
-      </div>
-      <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h4 style="color: #1d4ed8; margin-top: 0;">What to Remember:</h4>
-        <ul style="color: #1e40af;">
-          <li>Bring your phone with this email or booking confirmation</li>
-          <li>Have your Booking ID ready: #${bookingId}</li>
-          <li>Arrive 30 minutes before the event starts</li>
-          <li>Check-in at the venue entrance with your booking details</li>
-        </ul>
-      </div>
-      <p>We hope you have an amazing time at the event.</p>
-    `,
-    };
-};
-
-// Booking Cancellation Email
-export const getBookingCancellationEmail = (
-    name: string,
-    eventTitle: string,
-    bookingId: number,
-    refundAmount?: number
-): EmailTemplate => {
-    return {
-        subject: `Booking Cancelled: ${eventTitle}`,
-        body: `
-      <p>Dear ${name},</p>
-      <h3>Booking Cancellation Confirmed</h3>
-      <p>Your booking for <strong>${eventTitle}</strong> has been successfully cancelled.</p>
-      <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
-        <h4 style="color: #dc2626; margin-top: 0;">Cancellation Details:</h4>
-        <p><strong>Event:</strong> ${eventTitle}</p>
-        <p><strong>Booking ID:</strong> #${bookingId}</p>
-        <p><strong>Cancellation Date:</strong> ${new Date().toLocaleDateString()}</p>
-        ${refundAmount ? `<p><strong>Refund Amount:</strong> KSh ${refundAmount}</p>` : ''}
-      </div>
-      ${refundAmount ?
-                `<p><strong>Refund Processing:</strong> Your refund will be processed within 5-7 business days to your original payment method.</p>` :
-                `<p><strong>Note:</strong> This booking was cancelled outside the refund window. No refund will be processed.</p>`
-            }
-      <p>We understand plans can change. We hope to see you at future events.</p>
-      <p>Thank you for choosing TicKenya.</p>
-    `,
-    };
-};
-
-// Event Update Notification Email
-export const getEventUpdateEmail = (
-    name: string,
-    eventTitle: string,
-    updateType: 'venue_change' | 'time_change' | 'date_change' | 'general_update',
-    updateDetails: string,
-    bookingId: number
-): EmailTemplate => {
-    const updateTypeMessages = {
-        venue_change: 'Venue Change',
-        time_change: 'Time Change',
-        date_change: 'Date Change',
-        general_update: 'Important Update'
-    };
-
-    return {
-        subject: `Update: ${eventTitle} - ${updateTypeMessages[updateType]}`,
-        body: `
-      <p>Dear ${name},</p>
-      <h3>Important Update About Your Event</h3>
-      <p>We have an important update regarding your upcoming event booking:</p>
-      <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-        <h4 style="color: #d97706; margin-top: 0;">${updateTypeMessages[updateType]}</h4>
-        <p><strong>Event:</strong> ${eventTitle}</p>
-        <p><strong>Booking ID:</strong> #${bookingId}</p>
-      </div>
-      <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h4 style="color: #1d4ed8; margin-top: 0;">Update Details:</h4>
-        <p style="color: #1e40af;">${updateDetails}</p>
-      </div>
-      <p>If you have any concerns about this update or need to make changes to your booking, please contact our support team.</p>
-      <p>Thank you for your understanding.</p>
-    `,
-    };
-};
-
-// Password Reset Success Confirmation Email
-export const getPasswordResetSuccessEmail = (
-    name: string
-): EmailTemplate => {
-    return {
-        subject: "Password Reset Successful - TicKenya",
-        body: `
-      <p>Dear ${name},</p>
-      <h3>Password Reset Successful</h3>
-      <p>Your password has been successfully reset for your TicKenya account.</p>
-      <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-        <h4 style="color: #059669; margin-top: 0;">Security Details:</h4>
-        <p style="color: #065f46;"><strong>Password Changed:</strong> ${new Date().toLocaleString()}</p>
-        <p style="color: #065f46;"><strong>Account Email:</strong> Protected for security</p>
-        <p style="color: #065f46;"><strong>Reset From:</strong> TicKenya Web Platform</p>
-      </div>
-      <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-        <h4 style="color: #d97706; margin-top: 0;">Security Recommendations:</h4>
-        <ul style="color: #92400e;">
-          <li>Keep your new password secure and don't share it with anyone</li>
-          <li>Use a unique password that you don't use on other websites</li>
-          <li>Consider enabling two-factor authentication if available</li>
-          <li>Log out of any devices you don't recognize</li>
-        </ul>
-      </div>
-      <p>If you didn't make this change, please contact our support team immediately, as someone may have unauthorized access to your account.</p>
-      <p>You can now log in to your TicKenya account using your new password.</p>
-      <p>Thank you for keeping your account secure.</p>
-    `,
-    };
-};
-
-// Email Verification Success Confirmation Email
-export const getEmailVerificationSuccessEmail = (
-    name: string
-): EmailTemplate => {
-    return {
-        subject: "Email Verified Successfully - Welcome to TicKenya!",
-        body: `
-      <p>Dear ${name},</p>
-      <h3>Email Verification Successful</h3>
-      <p>Congratulations! Your email address has been successfully verified for your TicKenya account.</p>
-      <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-        <h4 style="color: #059669; margin-top: 0;">Account Status:</h4>
-        <p style="color: #065f46;"><strong>Email Status:</strong> Verified</p>
-        <p style="color: #065f46;"><strong>Verified On:</strong> ${new Date().toLocaleString()}</p>
-        <p style="color: #065f46;"><strong>Account Type:</strong> Active TicKenya Member</p>
-      </div>
-      <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-        <h4 style="color: #1e40af; margin-top: 0;">What's Next?</h4>
-        <p style="color: #1e3a8a;">Now that your email is verified, you can:</p>
-        <ul style="color: #1e3a8a;">
-          <li>Browse and book tickets for amazing events</li>
-          <li>View and manage your booking history</li>
-          <li>Receive important event notifications and updates</li>
-          <li>Access exclusive member offers and early bird discounts</li>
-          <li>Rate and review events you've attended</li>
-          <li>Get instant access to your digital tickets</li>
-        </ul>
-      </div>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.FRONTEND_URL}/events" style="background-color: #6366f1; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Start Booking Events</a>
-      </div>
-      <p>We are thrilled to have you as part of the TicKenya community. Start exploring amazing events and create unforgettable memories.</p>
-      <p>Welcome aboard!</p>
-    `,
-    };
-};
-
-// Booking & Payment Confirmation Email (with download ticket message)
-export const getBookingAndPaymentEmail = (
-    name: string,
-    email: string,
-    eventTitle: string,
-    venueName: string,
-    eventDate: string,
-    eventTime: string,
-    quantity: number,
-    totalAmount: number,
-    bookingId: number,
-    paymentMethod: string,
-    transactionId: string
-): EmailTemplate => {
-    return {
-        subject: `Your Booking & Payment Confirmed: ${eventTitle}`,
-        body: `
-      <p>Dear ${name},</p>
-      <h3>Your booking and payment have been confirmed!</h3>
-      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h4 style="color: #6366f1; margin-top: 0;">Event Details:</h4>
-        <p><strong>Event:</strong> ${eventTitle}</p>
-        <p><strong>Venue:</strong> ${venueName}</p>
-        <p><strong>Date:</strong> ${eventDate}</p>
-        <p><strong>Time:</strong> ${eventTime}</p>
-        <p><strong>Tickets:</strong> ${quantity}</p>
-        <p><strong>Total Amount:</strong> KSh ${totalAmount}</p>
-        <p><strong>Booking ID:</strong> #${bookingId}</p>
-      </div>
-      <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
-        <h4 style="color: #0ea5e9; margin-top: 0;">Payment Details:</h4>
-        <p><strong>Amount Paid:</strong> KSh ${totalAmount}</p>
-        <p><strong>Payment Method:</strong> ${paymentMethod}</p>
-        <p><strong>Transaction ID:</strong> ${transactionId}</p>
-        <p><strong>Payment Date:</strong> ${new Date().toLocaleDateString()}</p>
-      </div>
-      <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-        <h4 style="color: #047857; margin-top: 0;">Download Your Ticket</h4>
-        <p>You can now download your ticket in the TicKenya app. Open the app, go to 'My Bookings', and download your digital ticket for entry to the event.</p>
-      </div>
-      <p><strong>Important:</strong> Please save this email as your booking confirmation. Present your booking ID at the venue entrance.</p>
-      <p>Thank you for choosing TicKenya. We look forward to seeing you at the event!</p>
-    `,
+    <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:0 auto; padding:20px;">
+      <h2 style="color:#000; font-weight:normal;">Email Verified</h2>
+      <p style="line-height:1.6;">Hi ${name},</p>
+      <p style="line-height:1.6;">Your email address has been successfully verified.</p>
+      <p style="line-height:1.6;">You now have full access to all Bitsa features.</p>
+      <p style="line-height:1.6; margin-top:30px;">Best regards,<br/>The Bitsa Team</p>
+    </div>
+  `,
     };
 };

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."majorEnum" ADD VALUE 'Computer Science' BEFORE 'Networking';
