@@ -1,14 +1,4 @@
-import {
-  pgTable,
-  varchar,
-  uuid,
-  timestamp,
-  integer,
-  boolean,
-  text,
-  primaryKey,
-  pgEnum,
-} from "drizzle-orm/pg-core";
+import {pgTable,varchar,uuid,timestamp,integer,boolean,text,primaryKey,pgEnum,} from "drizzle-orm/pg-core";
 
 //
 // ────────────────────────────────────────────────
@@ -39,10 +29,8 @@ export const roleEnum = pgEnum("roleEnum", [
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-
   schoolId: varchar("schoolId", { length: 50 }).notNull().unique(),
   isInternal: boolean("isInternal").default(true),
-
   schoolName: varchar("schoolName", { length: 255 }),
 
   email: varchar("email", { length: 255 }).notNull().unique(),
