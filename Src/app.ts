@@ -19,7 +19,7 @@ const app: Application = express();
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000'||'https://scaling-train-4jgxrg6jpv952q954-5173.app.github.dev/',
     credentials: true // Allow cookies
 }));
 app.use(express.json());
