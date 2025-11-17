@@ -9,10 +9,10 @@
     "clean": "rm -rf dist && find Src -name '*.js' -type f -delete && find Src -name '*.js.map' -type f -delete",
     "start": "node ./dist/server.js",
     "gen": "drizzle-kit generate",
-    "migrate": " tsx src/drizzle/migrate.ts",
+    "migrate": " tsx Src/drizzle/migrate.ts",
     "studio": "drizzle-kit studio",
     "push": "drizzle-kit push",
-    "seed": "tsx src/drizzle/seed.ts",
+    "seed": "tsx Src/drizzle/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

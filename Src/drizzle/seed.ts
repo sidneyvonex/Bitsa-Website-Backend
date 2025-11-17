@@ -1,5 +1,5 @@
 import db from './db';
-import { users } from './schema';
+import { users, interests } from './schema';
 import bcrypt from 'bcrypt';
 
 async function seed() {
@@ -24,6 +24,37 @@ async function seed() {
             isActive: true,
         });
 
+        console.log('✅ SuperAdmin user created');
+
+        // Seed interests
+        const defaultInterests = [
+            'Machine Learning',
+            'Artificial Intelligence',
+            'Web Development',
+            'Mobile App Development',
+            'Data Science',
+            'Cybersecurity',
+            'Cloud Computing',
+            'DevOps',
+            'Blockchain',
+            'Internet of Things (IoT)',
+            'Game Development',
+            'UI/UX Design',
+            'Database Management',
+            'Computer Networks',
+            'Software Testing',
+            'Algorithms',
+            'Computer Graphics',
+            'Natural Language Processing',
+            'Computer Vision',
+            'Robotics'
+        ];
+
+        for (const interestName of defaultInterests) {
+            await db.insert(interests).values({ name: interestName }).onConflictDoNothing();
+        }
+
+        console.log('✅ Default interests created');
         console.log('✅ Seeding completed successfully');
         process.exit(0);
     } catch (error) {
