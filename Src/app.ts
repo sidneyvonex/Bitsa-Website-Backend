@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import { swaggerSetup } from './swagger';
 import { authRouter } from './Auth/auth.routes';
 import { usersRouter } from './Users/users.routes';
+import { auditRouter } from './Audit/audit.routes';
 
 const app: Application = express();
 
@@ -36,5 +37,6 @@ app.get('/health', (req, res) => {
 //Other Routes 
 app.use('/api', authRouter);
 app.use('/api', usersRouter);
+app.use('/api', auditRouter);
 
 export default app;

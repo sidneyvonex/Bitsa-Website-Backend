@@ -56,7 +56,7 @@ export const verifyToken = (token: string, secret: string) => {
 }
 
 //Authorization middleware
-export const authMiddleware = (requiredRole: 'admin' | 'user' | 'both') =>
+export const authMiddleware = (requiredRole: 'admin' | 'student' | 'both') =>
     (req: Request, res: Response, next: NextFunction) => {
         const authHeader = req.header('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -89,9 +89,9 @@ export const authMiddleware = (requiredRole: 'admin' | 'user' | 'both') =>
         const normalizedRequiredRole = requiredRole.toLowerCase();
 
         const isAllowed =
-            normalizedRequiredRole === 'both' ? (role === 'admin' || role === 'user' || role === 'superadmin')
+            normalizedRequiredRole === 'both' ? (role === 'admin' || role === 'student' || role === 'superadmin')
                 : normalizedRequiredRole === 'admin' ? (role === 'admin' || role === 'superadmin')
-                    : normalizedRequiredRole === 'user' ? role === 'user'
+                    : normalizedRequiredRole === 'student' ? role === 'student'
                         : false;
 
         if (!isAllowed) {
@@ -109,10 +109,10 @@ export const authMiddleware = (requiredRole: 'admin' | 'user' | 'both') =>
 
 
 
-//Middleware to check if the User is an Admin || Member || Both
+//Middleware to check if the User is an Admin || Student || Both
 export const authenticate = authMiddleware('both'); // Any authenticated user
 export const adminRoleAuth = authMiddleware('admin');
-export const memberRoleAuth = authMiddleware('user');
+export const studentRoleAuth = authMiddleware('student');
 export const bothRoleAuth = authMiddleware('both');
 
 // SuperAdmin-only middleware

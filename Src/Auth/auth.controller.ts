@@ -6,6 +6,7 @@ import { loginValidator, userValidator } from "../Validation/user.validator";
 import { sendWelcomeEmail, sendPasswordResetEmail, sendAccountVerificationEmail } from "../Emails/emailService";
 import { getPasswordResetSuccessEmail, getEmailVerificationSuccessEmail } from "../Emails/emailTemplates";
 import { sendEventEmail } from "../Middleware/googleMailer";
+import { logAuditEvent, getIpAddress, getUserAgent } from "../Middleware/auditLogger";
 
 export const createUser = async (req: Request, res: Response) => {
     try {
@@ -62,6 +63,16 @@ export const createUser = async (req: Request, res: Response) => {
             recipientName: `${firstName} ${lastName}`
         });
 
+        // Log user creation
+        await logAuditEvent(
+            req,
+            "CREATE",
+            `New user registered: ${email}`,
+            "User",
+            schoolId,
+            { role: 'student', schoolName: schoolName || defaultSchoolName }
+        );
+
         res.status(201).json({ message: "User created successfully", user: newUser });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to create user" });
@@ -111,6 +122,16 @@ export const loginUser = async (req: Request, res: Response) => {
             sameSite: 'strict',
             maxAge: 7 * 24 * 3600 * 1000 // 7 days
         });
+
+        // Log successful login
+        await logAuditEvent(
+            req,
+            "LOGIN",
+            `User ${existingUser.email} logged in successfully`,
+            "User",
+            existingUser.schoolId,
+            { loginMethod: 'email-password' }
+        );
 
         res.status(200).json({ 
             token, 
@@ -435,6 +456,8 @@ export const resendVerificationCode = async (req: Request, res: Response) => {
 export const logoutUser = async (req: Request, res: Response) => {
     try {
         const refreshToken = req.cookies?.refreshToken;
+        const userId = req.user?.userId;
+        
         if (refreshToken) {
             // Find user and revoke their refresh token
             const user = await getUserByRefreshTokenService(refreshToken);
@@ -449,6 +472,17 @@ export const logoutUser = async (req: Request, res: Response) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict'
         });
+
+        // Log logout
+        if (userId) {
+            await logAuditEvent(
+                req,
+                "LOGOUT",
+                `User ${userId} logged out`,
+                "User",
+                userId
+            );
+        }
 
         res.status(200).json({ message: "Logged out successfully" });
     } catch (error: any) {

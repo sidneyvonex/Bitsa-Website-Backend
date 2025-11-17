@@ -15,6 +15,7 @@ import {
     searchUsersService,
     getUserStatsService
 } from "./users.service";
+import { logAuditEvent } from "../Middleware/auditLogger";
 
 // Get current user profile (authenticated user)
 export const getCurrentUserProfile = async (req: Request, res: Response) => {
@@ -103,7 +104,19 @@ export const updateCurrentUserProfile = async (req: Request, res: Response) => {
         if (major) updates.major = major;
         if (customMajor) updates.customMajor = customMajor;
         
+        const oldUser = await getUserProfileService(userId);
         const updatedUser = await updateUserProfileService(userId, updates);
+        
+        await logAuditEvent(
+            req,
+            "PROFILE_UPDATE",
+            `User ${userId} updated their profile`,
+            "User",
+            userId,
+            { fields: Object.keys(updates) },
+            oldUser,
+            updatedUser
+        );
         
         res.status(200).json({ 
             message: "Profile updated successfully", 
@@ -160,12 +173,24 @@ export const updateUserRole = async (req: Request, res: Response) => {
             return;
         }
         
+        const oldUser = await getUserProfileService(schoolId);
         const updatedUser = await updateUserRoleService(schoolId, role);
         
         if (!updatedUser) {
             res.status(404).json({ error: "User not found" });
             return;
         }
+        
+        await logAuditEvent(
+            req,
+            "ROLE_CHANGE",
+            `User ${schoolId} role changed from ${oldUser?.role} to ${role}`,
+            "User",
+            schoolId,
+            { oldRole: oldUser?.role, newRole: role },
+            { role: oldUser?.role },
+            { role }
+        );
         
         res.status(200).json({ 
             message: "User role updated successfully", 
@@ -196,6 +221,14 @@ export const deactivateUser = async (req: Request, res: Response) => {
             return;
         }
         
+        await logAuditEvent(
+            req,
+            "DEACTIVATE",
+            `User ${schoolId} was deactivated`,
+            "User",
+            schoolId
+        );
+        
         res.status(200).json({ 
             message: "User deactivated successfully", 
             user: updatedUser 
@@ -216,6 +249,14 @@ export const activateUser = async (req: Request, res: Response) => {
             res.status(404).json({ error: "User not found" });
             return;
         }
+        
+        await logAuditEvent(
+            req,
+            "ACTIVATE",
+            `User ${schoolId} was activated`,
+            "User",
+            schoolId
+        );
         
         res.status(200).json({ 
             message: "User activated successfully", 
@@ -238,9 +279,23 @@ export const deleteUser = async (req: Request, res: Response) => {
             return;
         }
         
-        await deleteUserService(schoolId);
+        const userToDelete = await getUserProfileService(schoolId);
+        const deletedBy = req.user?.userId || 'unknown';
         
-        res.status(200).json({ message: "User deleted successfully" });
+        const deletedUser = await deleteUserService(schoolId, deletedBy);
+        
+        await logAuditEvent(
+            req,
+            "DELETE",
+            `User ${schoolId} was soft deleted by ${deletedBy}`,
+            "User",
+            schoolId,
+            { deletedBy },
+            userToDelete,
+            deletedUser
+        );
+        
+        res.status(200).json({ message: "User deleted successfully (soft delete)" });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to delete user" });
     }

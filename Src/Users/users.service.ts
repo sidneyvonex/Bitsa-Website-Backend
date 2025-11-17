@@ -5,14 +5,20 @@ import { TUserInsert, TUserSelect, users } from "../drizzle/schema";
 // Get user by schoolId (primary identifier)
 export const getUserBySchoolIdService = async (schoolId: string): Promise<TUserSelect | undefined> => {
     return await db.query.users.findFirst({
-        where: eq(users.schoolId, schoolId),
+        where: and(
+            eq(users.schoolId, schoolId),
+            sql`${users.deletedAt} IS NULL` // Exclude soft-deleted users
+        ),
     });
 };
 
 // Get user profile (excluding sensitive data)
 export const getUserProfileService = async (schoolId: string) => {
     const user = await db.query.users.findFirst({
-        where: eq(users.schoolId, schoolId),
+        where: and(
+            eq(users.schoolId, schoolId),
+            sql`${users.deletedAt} IS NULL` // Exclude soft-deleted users
+        ),
         columns: {
             id: true,
             schoolId: true,
@@ -65,6 +71,9 @@ export const getAllUsersService = async (
     if (major) {
         conditions.push(eq(users.major, major as any));
     }
+    
+    // Exclude soft-deleted users by default
+    conditions.push(sql`${users.deletedAt} IS NULL`);
     
     if (searchTerm) {
         conditions.push(
@@ -166,9 +175,19 @@ export const activateUserService = async (schoolId: string) => {
 };
 
 // Delete user account (soft delete via deactivation)
-export const deleteUserService = async (schoolId: string) => {
-    await db.delete(users).where(eq(users.schoolId, schoolId));
-    return { message: "User deleted successfully" };
+export const deleteUserService = async (schoolId: string, deletedBy: string) => {
+    const [deleted] = await db
+        .update(users)
+        .set({ 
+            deletedAt: new Date(),
+            deletedBy: deletedBy,
+            isActive: false,
+            updatedAt: new Date()
+        })
+        .where(eq(users.schoolId, schoolId))
+        .returning();
+    
+    return deleted;
 };
 
 // Update profile picture
@@ -196,7 +215,10 @@ export const updateBioService = async (schoolId: string, bio: string) => {
 // Get users by role
 export const getUsersByRoleService = async (role: string) => {
     return await db.query.users.findMany({
-        where: eq(users.role, role as any),
+        where: and(
+            eq(users.role, role as any),
+            sql`${users.deletedAt} IS NULL`
+        ),
         columns: {
             passwordHash: false,
             verificationToken: false,
@@ -212,7 +234,10 @@ export const getUsersByRoleService = async (role: string) => {
 // Get users by major
 export const getUsersByMajorService = async (major: string) => {
     return await db.query.users.findMany({
-        where: eq(users.major, major as any),
+        where: and(
+            eq(users.major, major as any),
+            sql`${users.deletedAt} IS NULL`
+        ),
         columns: {
             passwordHash: false,
             verificationToken: false,

@@ -62,6 +62,10 @@ export const users = pgTable("users", {
   refreshTokenExpiry: timestamp("refreshTokenExpiry"),
   lastLogin: timestamp("lastLogin"),
 
+  // Soft delete
+  deletedAt: timestamp("deletedAt"),
+  deletedBy: varchar("deletedBy", { length: 50 }), // schoolId of who deleted
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -326,3 +330,59 @@ export type TPartnerSelect = typeof partners.$inferSelect;
 export type TReportInsert = typeof reports.$inferInsert;
 export type TReportSelect = typeof reports.$inferSelect;
 
+//
+// ────────────────────────────────────────────────
+// AUDIT LOGS TABLE (SuperAdmin Oversight)
+// ────────────────────────────────────────────────
+//
+
+export const actionEnum = pgEnum("actionEnum", [
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "LOGIN",
+  "LOGOUT",
+  "ACTIVATE",
+  "DEACTIVATE",
+  "ROLE_CHANGE",
+  "PASSWORD_RESET",
+  "EMAIL_VERIFY",
+  "PROFILE_UPDATE",
+  "OTHER"
+]);
+
+export const auditLogs = pgTable("auditLogs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  
+  // Who performed the action
+  userId: varchar("userId", { length: 50 }), // schoolId of actor
+  userEmail: varchar("userEmail", { length: 255 }),
+  userRole: varchar("userRole", { length: 50 }),
+  
+  // What action was performed
+  action: actionEnum("action").notNull(),
+  actionDescription: text("actionDescription").notNull(),
+  
+  // What resource was affected
+  resourceType: varchar("resourceType", { length: 100 }), // e.g., "User", "Project", "Blog"
+  resourceId: varchar("resourceId", { length: 255 }), // schoolId or other identifier
+  
+  // Additional context
+  metadata: text("metadata"), // JSON string with additional details
+  ipAddress: varchar("ipAddress", { length: 45 }), // IPv4 or IPv6
+  userAgent: text("userAgent"),
+  
+  // Before/After snapshots (for updates/deletes)
+  oldValues: text("oldValues"), // JSON string of old values
+  newValues: text("newValues"), // JSON string of new values
+  
+  // Status
+  success: boolean("success").default(true).notNull(),
+  errorMessage: text("errorMessage"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// 12. Audit Logs
+export type TAuditLogInsert = typeof auditLogs.$inferInsert;
+export type TAuditLogSelect = typeof auditLogs.$inferSelect;
