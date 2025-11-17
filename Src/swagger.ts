@@ -32,17 +32,18 @@ const options ={
         servers:[
 
             {
-                url: "https://bitsabackendapi.azurewebsites.net/",
+                url: "https://bitsabackendapi.azurewebsites.net/api",
                 description: "Production server"
             },
-                        {
-                url: "http://localhost:3000/api",
-                description: "Development server"
-            },
+
             {
                 url: "https://glowing-space-happiness-g45gp564vrrpcw6v5-3000.app.github.dev/api",
                 description: "CodeSpace server"
-            }
+            },
+                                    {
+                url: "http://localhost:3000/api",
+                description: "Development server"
+            },
         ]
     },
     apis:['./Src/**/*.ts', // Path to the API docs (note: case-sensitive Src)
