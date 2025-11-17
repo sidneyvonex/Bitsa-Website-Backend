@@ -7,6 +7,25 @@ async function seed() {
         console.log('🌱 Seeding database...');
 
         // ============================================
+        // 0. CLEAR EXISTING DATA (in reverse order of dependencies)
+        // ============================================
+        console.log('🗑️  Clearing existing data...');
+        await db.delete(reportTranslations);
+        await db.delete(eventTranslations);
+        await db.delete(blogTranslations);
+        await db.delete(userInterests);
+        await db.delete(reports);
+        await db.delete(partners);
+        await db.delete(communities);
+        await db.delete(leaders);
+        await db.delete(projects);
+        await db.delete(events);
+        await db.delete(blogs);
+        await db.delete(interests);
+        await db.delete(users);
+        console.log('✅ Existing data cleared');
+
+        // ============================================
         // 1. CREATE USERS
         // ============================================
         const hashedPassword = bcrypt.hashSync('admin123', bcrypt.genSaltSync(12));
