@@ -1,167 +1,258 @@
-# Audit System & Soft Delete Implementation
+# Audit System Documentation
 
 ## Overview
-Complete audit logging system for SuperAdmin oversight and soft delete functionality for all entities.
 
-## 🔍 Audit System
+The Audit System provides comprehensive logging and tracking of all administrative actions and critical operations within the BITSA Backend. It helps maintain security, accountability, and transparency by recording who did what and when.
 
-### Purpose
-Every action taken by users/admins is logged and viewable by SuperAdmin for:
-- Security monitoring
-- Compliance tracking
-- Activity auditing
-- Troubleshooting
-- User behavior analysis
+**Base URL**: `/api/audit`
 
-### Audit Log Structure
+---
+
+## Purpose
+
+The audit system serves multiple purposes:
+
+1. **Security**: Track unauthorized access attempts
+2. **Accountability**: Record who performed sensitive operations
+3. **Compliance**: Maintain logs for regulatory requirements
+4. **Debugging**: Trace issues back to specific actions
+5. **Analytics**: Understand system usage patterns
+
+---
+
+## What Gets Logged
+
+### Automatically Logged Events
+
+#### Authentication Events
+- User login attempts (success/failure)
+- Password reset requests
+- Email verification
+- Token refresh
+- Account lockouts
+
+#### User Management
+- User registration
+- Profile updates
+- Role changes
+- Account activation/deactivation
+- User deletion
+
+#### Content Management
+- Blog creation, updates, deletion
+- Event creation, updates, deletion
+- Report creation, updates, deletion
+- Project submissions, updates
+- Community management
+
+#### System Events
+- Configuration changes
+- Failed authorization attempts
+- API errors
+- Database migration runs
+
+---
+
+## Audit Log Structure
+
+Each audit log entry contains:
+
 ```typescript
 {
-  id: string;
-  userId: string;              // schoolId of who performed action
-  userEmail: string;
-  userRole: string;            // student/admin/superadmin
-  action: string;              // CREATE, UPDATE, DELETE, LOGIN, etc.
-  actionDescription: string;   // Human-readable description
-  resourceType: string;        // "User", "Project", "Blog", etc.
-  resourceId: string;          // ID of affected resource
-  metadata: object;            // Additional context
-  ipAddress: string;           // IP address of requester
-  userAgent: string;           // Browser/client info
-  oldValues: object;           // Before state (for updates/deletes)
-  newValues: object;           // After state (for updates/creates)
-  success: boolean;            // Operation succeeded?
-  errorMessage: string;        // Error details if failed
-  createdAt: Date;
+  id: string;              // Unique log ID
+  userId: string | null;   // User who performed action
+  action: string;          // Action type (e.g., "CREATE_BLOG")
+  details: string;         // Human-readable description
+  ipAddress: string;       // Request IP address
+  userAgent: string;       // Browser/client info
+  timestamp: Date;         // When action occurred
+  metadata: JSON | null;   // Additional context (optional)
 }
 ```
 
-### Action Types
-- **CREATE** - New resource created
-- **UPDATE** - Resource modified
-- **DELETE** - Resource deleted (soft delete)
-- **LOGIN** - User logged in
-- **LOGOUT** - User logged out
-- **ACTIVATE** - User account activated
-- **DEACTIVATE** - User account deactivated
-- **ROLE_CHANGE** - User role modified
-- **PASSWORD_RESET** - Password reset performed
-- **EMAIL_VERIFY** - Email verification completed
-- **PROFILE_UPDATE** - Profile information updated
-- **OTHER** - Other actions
+---
 
-## 🗑️ Soft Delete
+## API Endpoints
 
-### What is Soft Delete?
-Instead of permanently removing records from the database, soft delete marks them as deleted while keeping the data intact.
+### 1. Get Audit Logs
 
-### Benefits
-- ✅ Data recovery possible
-- ✅ Audit trail preserved
-- ✅ Compliance with data retention policies
-- ✅ Accidental deletion protection
-- ✅ Historical data analysis
+Retrieve audit logs with filtering and pagination.
 
-### Implementation
-Every table with soft delete has:
-```typescript
-{
-  deletedAt: Date | null;     // When deleted (null = not deleted)
-  deletedBy: string | null;   // Who deleted it (schoolId)
-}
-```
+**Endpoint**: `GET /api/audit/logs`
 
-### Behavior
-- **Default queries** exclude soft-deleted records automatically
-- **SuperAdmin** can view/restore soft-deleted records
-- **Delete operations** set `deletedAt` and `deletedBy`, and `isActive = false`
+**Authentication**: Required (Admin or SuperAdmin only)
 
-## 📋 Audit API Endpoints (SuperAdmin Only)
-
-### 1. Get All Audit Logs
-**GET** `/api/audit/logs`
-
-Returns paginated audit logs with comprehensive filters.
-
-**Query Parameters:**
+**Query Parameters**:
 - `page` (optional): Page number (default: 1)
-- `limit` (optional): Logs per page (default: 50)
-- `userId` (optional): Filter by user schoolId
+- `limit` (optional): Items per page (default: 50, max: 100)
+- `userId` (optional): Filter by specific user
 - `action` (optional): Filter by action type
-- `resourceType` (optional): Filter by resource type
-- `startDate` (optional): Filter by start date (ISO 8601)
-- `endDate` (optional): Filter by end date (ISO 8601)
-- `success` (optional): Filter by success status (true/false)
-- `search` (optional): Search in description, email, resourceId
+- `startDate` (optional): Filter from date (ISO 8601)
+- `endDate` (optional): Filter to date (ISO 8601)
+- `search` (optional): Search in details field
 
-**Example:**
-```bash
-GET /api/audit/logs?page=1&limit=50&action=DELETE&startDate=2024-01-01
-```
-
-**Response:**
+**Response**:
 ```json
 {
-  "logs": [
-    {
-      "id": "uuid",
-      "userId": "12345",
-      "userEmail": "admin@example.com",
-      "userRole": "admin",
-      "action": "DELETE",
-      "actionDescription": "User 67890 was soft deleted by 12345",
-      "resourceType": "User",
-      "resourceId": "67890",
-      "metadata": "{\"deletedBy\":\"12345\"}",
-      "ipAddress": "192.168.1.1",
-      "userAgent": "Mozilla/5.0...",
-      "oldValues": "{\"isActive\":true,...}",
-      "newValues": "{\"isActive\":false,\"deletedAt\":\"...\"}",
-      "success": true,
-      "errorMessage": null,
-      "createdAt": "2024-01-15T10:30:00Z"
+  "success": true,
+  "data": {
+    "logs": [
+      {
+        "id": "log-uuid",
+        "userId": "user-uuid",
+        "userName": "John Admin",
+        "userEmail": "admin@bitsa.com",
+        "action": "CREATE_BLOG",
+        "details": "Created blog: 'Introduction to AI'",
+        "ipAddress": "192.168.1.100",
+        "userAgent": "Mozilla/5.0...",
+        "timestamp": "2024-11-17T14:30:00Z",
+        "metadata": {
+          "blogId": "blog-uuid",
+          "category": "Technology"
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 50,
+      "total": 523,
+      "pages": 11
     }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 50,
-    "total": 1250,
-    "totalPages": 25
+  }
+}
+```
+
+**Example Requests**:
+
+```bash
+# Get all audit logs
+curl -X GET http://localhost:3000/api/audit/logs \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+
+# Filter by user
+curl -X GET "http://localhost:3000/api/audit/logs?userId=USER_UUID" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+
+# Filter by action type
+curl -X GET "http://localhost:3000/api/audit/logs?action=DELETE_USER" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+
+# Filter by date range
+curl -X GET "http://localhost:3000/api/audit/logs?startDate=2024-11-01&endDate=2024-11-17" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+
+# Search in details
+curl -X GET "http://localhost:3000/api/audit/logs?search=blog" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+
+# Combined filters with pagination
+curl -X GET "http://localhost:3000/api/audit/logs?action=LOGIN&page=1&limit=25" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+```
+
+---
+
+### 2. Get User Activity
+
+Get all audit logs for a specific user.
+
+**Endpoint**: `GET /api/audit/user/:userId`
+
+**Authentication**: Required (Admin or SuperAdmin only)
+
+**Query Parameters**:
+- `page` (optional): Page number
+- `limit` (optional): Items per page
+- `startDate` (optional): Filter from date
+- `endDate` (optional): Filter to date
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user-uuid",
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "role": "student"
+    },
+    "logs": [
+      {
+        "id": "log-uuid",
+        "action": "LOGIN",
+        "details": "User logged in",
+        "ipAddress": "192.168.1.50",
+        "timestamp": "2024-11-17T10:00:00Z"
+      },
+      {
+        "id": "log-uuid",
+        "action": "SUBMIT_PROJECT",
+        "details": "Submitted project: 'Smart Campus App'",
+        "ipAddress": "192.168.1.50",
+        "timestamp": "2024-11-17T11:30:00Z"
+      }
+    ],
+    "summary": {
+      "totalActions": 47,
+      "lastActivity": "2024-11-17T14:00:00Z",
+      "mostCommonAction": "LOGIN"
+    }
   }
 }
 ```
 
 ---
 
-### 2. Get Audit Statistics
-**GET** `/api/audit/stats`
+### 3. Get Audit Statistics
 
-Returns comprehensive audit statistics.
+Get overview statistics about audit logs.
 
-**Query Parameters:**
-- `startDate` (optional): Start date
-- `endDate` (optional): End date
+**Endpoint**: `GET /api/audit/stats`
 
-**Response:**
+**Authentication**: Required (SuperAdmin only)
+
+**Query Parameters**:
+- `startDate` (optional): Statistics from date
+- `endDate` (optional): Statistics to date
+- `period` (optional): Group by period (`day`, `week`, `month`)
+
+**Response**:
 ```json
 {
-  "stats": {
-    "total": 15000,
-    "successful": 14750,
-    "failed": 250,
-    "byAction": [
-      { "action": "LOGIN", "count": 5000 },
-      { "action": "UPDATE", "count": 3500 },
-      { "action": "CREATE", "count": 2000 },
-      { "action": "DELETE", "count": 500 }
-    ],
-    "byResource": [
-      { "resourceType": "User", "count": 8000 },
-      { "resourceType": "Project", "count": 4000 },
-      { "resourceType": "Blog", "count": 3000 }
-    ],
+  "success": true,
+  "data": {
+    "totalLogs": 5234,
+    "uniqueUsers": 156,
+    "period": {
+      "start": "2024-11-01",
+      "end": "2024-11-17"
+    },
+    "actionBreakdown": {
+      "LOGIN": 2341,
+      "CREATE_BLOG": 45,
+      "UPDATE_PROFILE": 389,
+      "SUBMIT_PROJECT": 67,
+      "DELETE_USER": 3
+    },
     "topUsers": [
-      { "userId": "12345", "userEmail": "admin@example.com", "count": 2500 },
-      { "userId": "67890", "userEmail": "user@example.com", "count": 1800 }
+      {
+        "userId": "user-uuid",
+        "userName": "John Admin",
+        "actionCount": 234
+      }
+    ],
+    "failedActions": 12,
+    "timeline": [
+      {
+        "date": "2024-11-01",
+        "count": 234
+      },
+      {
+        "date": "2024-11-02",
+        "count": 289
+      }
     ]
   }
 }
@@ -169,303 +260,375 @@ Returns comprehensive audit statistics.
 
 ---
 
-### 3. Get Recent Activity
-**GET** `/api/audit/recent`
+## Action Types
 
-Returns the most recent audit log entries.
+### Authentication Actions
+- `LOGIN` - User login
+- `LOGOUT` - User logout
+- `LOGIN_FAILED` - Failed login attempt
+- `PASSWORD_RESET_REQUEST` - Password reset requested
+- `PASSWORD_RESET_COMPLETE` - Password successfully reset
+- `EMAIL_VERIFIED` - Email verification completed
 
-**Query Parameters:**
-- `limit` (optional): Number of logs (default: 20, max: 100)
+### User Management Actions
+- `CREATE_USER` - New user registered
+- `UPDATE_PROFILE` - Profile updated
+- `UPDATE_ROLE` - User role changed
+- `DEACTIVATE_USER` - User account deactivated
+- `ACTIVATE_USER` - User account activated
+- `DELETE_USER` - User deleted
 
-**Response:**
-```json
-{
-  "logs": [ /* array of recent log entries */ ],
-  "count": 20
-}
+### Content Management Actions
+- `CREATE_BLOG` - Blog created
+- `UPDATE_BLOG` - Blog updated
+- `DELETE_BLOG` - Blog deleted
+- `CREATE_EVENT` - Event created
+- `UPDATE_EVENT` - Event updated
+- `DELETE_EVENT` - Event deleted
+- `CREATE_REPORT` - Report created
+- `UPDATE_REPORT` - Report updated
+- `DELETE_REPORT` - Report deleted
+
+### Project Actions
+- `SUBMIT_PROJECT` - Project submitted
+- `UPDATE_PROJECT` - Project updated
+- `DELETE_PROJECT` - Project deleted
+- `APPROVE_PROJECT` - Project approved (admin)
+- `REJECT_PROJECT` - Project rejected (admin)
+
+### Community Actions
+- `CREATE_COMMUNITY` - Community created
+- `UPDATE_COMMUNITY` - Community updated
+- `DELETE_COMMUNITY` - Community deleted
+- `CREATE_PARTNER` - Partner added
+- `UPDATE_PARTNER` - Partner updated
+- `DELETE_PARTNER` - Partner deleted
+
+### Interest Actions
+- `CREATE_INTEREST` - Interest created
+- `UPDATE_INTEREST` - Interest updated
+- `DELETE_INTEREST` - Interest deleted
+- `ADD_USER_INTEREST` - User added interest
+- `REMOVE_USER_INTEREST` - User removed interest
+
+### AI Actions
+- `AI_CHAT` - AI chat used
+- `AI_GENERATE` - AI content generated
+- `AI_TRANSLATE` - AI translation used
+- `AI_FEEDBACK` - AI project feedback requested
+
+### System Actions
+- `CONFIG_CHANGE` - System configuration changed
+- `MIGRATION_RUN` - Database migration executed
+- `API_ERROR` - API error occurred
+- `UNAUTHORIZED_ACCESS` - Unauthorized access attempt
+
+---
+
+## Implementation
+
+### Automatic Logging (Middleware)
+
+The audit system uses middleware to automatically log actions:
+
+```typescript
+import { logAuditEvent } from '../Middleware/auditLogger';
+
+// In any controller
+export const createBlog = async (req: Request, res: Response) => {
+  try {
+    // Create blog
+    const blog = await createBlogService(data);
+    
+    // Log the action
+    await logAuditEvent(
+      req,
+      'CREATE_BLOG',
+      `Created blog: "${blog.title}"`,
+      { blogId: blog.id, category: blog.category }
+    );
+    
+    return res.status(201).json({ success: true, data: blog });
+  } catch (error) {
+    // Error handling
+  }
+};
 ```
 
----
+### Manual Logging
 
-### 4. Get User Audit Logs
-**GET** `/api/audit/user/:userId`
+For custom logging needs:
 
-Returns all audit logs for a specific user.
-
-**Example:** `GET /api/audit/user/12345?page=1&limit=50`
-
----
-
-### 5. Get Resource Audit Logs
-**GET** `/api/audit/resource/:resourceType/:resourceId`
-
-Returns all audit logs for a specific resource.
-
-**Example:** `GET /api/audit/resource/User/12345`
-
-Shows complete history of actions on user 12345.
-
----
-
-## 🔧 Usage in Code
-
-### Logging Audit Events
-
-#### From Controller
 ```typescript
-import { logAuditEvent } from "../Middleware/auditLogger";
+import db from '../drizzle/db';
+import { auditLogs } from '../drizzle/schema';
 
-// In your controller
-await logAuditEvent(
-    req,
-    "UPDATE",
-    `User ${userId} updated their profile`,
-    "User",
-    userId,
-    { fields: ["firstName", "bio"] },
-    oldValues,  // Before update
-    newValues   // After update
-);
-```
-
-#### Manual Logging
-```typescript
-import { createAuditLog } from "../Middleware/auditLogger";
-
-await createAuditLog({
-    userId: "12345",
-    userEmail: "user@example.com",
-    userRole: "admin",
-    action: "DELETE",
-    actionDescription: "Deleted project #567",
-    resourceType: "Project",
-    resourceId: "567",
-    metadata: { reason: "Duplicate" },
-    success: true
+await db.insert(auditLogs).values({
+  userId: user.id,
+  action: 'CUSTOM_ACTION',
+  details: 'Description of what happened',
+  ipAddress: req.ip,
+  userAgent: req.get('user-agent'),
+  metadata: JSON.stringify({ custom: 'data' })
 });
 ```
 
-### Implementing Soft Delete
-
-#### In Service
-```typescript
-// Soft delete
-export const deleteResourceService = async (resourceId: string, deletedBy: string) => {
-    const [deleted] = await db
-        .update(resources)
-        .set({ 
-            deletedAt: new Date(),
-            deletedBy: deletedBy,
-            isActive: false
-        })
-        .where(eq(resources.id, resourceId))
-        .returning();
-    
-    return deleted;
-};
-
-// Exclude soft-deleted in queries
-export const getResourcesService = async () => {
-    return await db.query.resources.findMany({
-        where: sql`${resources.deletedAt} IS NULL`
-    });
-};
-```
-
-#### In Controller
-```typescript
-export const deleteResource = async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const deletedBy = req.user?.userId || 'unknown';
-        
-        const oldResource = await getResourceService(id);
-        const deletedResource = await deleteResourceService(id, deletedBy);
-        
-        // Log the deletion
-        await logAuditEvent(
-            req,
-            "DELETE",
-            `Resource ${id} was soft deleted`,
-            "Resource",
-            id,
-            { deletedBy },
-            oldResource,
-            deletedResource
-        );
-        
-        res.status(200).json({ message: "Resource deleted successfully" });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
-};
-```
-
 ---
 
-## 🔐 Security Considerations
+## Security Considerations
+
+### Data Retention
+
+- **Development**: Logs kept for 30 days
+- **Production**: Logs kept for 1 year (recommended)
+- **Compliance**: May require longer retention
 
 ### Access Control
-- ✅ Only **SuperAdmin** can view audit logs
-- ✅ All audit endpoints protected with `superAdminAuth` middleware
-- ✅ Sensitive data (passwords, tokens) never logged
 
-### Data Protection
-- ✅ IP addresses and user agents logged for security
-- ✅ Before/after snapshots for change tracking
-- ✅ Error messages captured for failed operations
+Only admins and superadmins can:
+- View audit logs
+- Export audit logs
+- View user activity
+- Access audit statistics
 
-### Compliance
-- ✅ Immutable audit trail (logs cannot be modified)
-- ✅ Complete action history
-- ✅ User attribution for all actions
+### Sensitive Data
 
----
+Audit logs should NOT contain:
+- Passwords (even hashed)
+- JWT tokens
+- API keys
+- Personal identification numbers
+- Credit card information
+- Session cookies
 
-## 📊 SuperAdmin Dashboard Use Cases
+### Privacy Compliance
 
-### 1. Security Monitoring
-```bash
-# View all failed login attempts
-GET /api/audit/logs?action=LOGIN&success=false
-
-# View all deletions in last 7 days
-GET /api/audit/logs?action=DELETE&startDate=2024-01-08
-
-# View all role changes
-GET /api/audit/logs?action=ROLE_CHANGE
-```
-
-### 2. User Activity Tracking
-```bash
-# View all actions by specific user
-GET /api/audit/user/12345
-
-# View most active users
-GET /api/audit/stats
-```
-
-### 3. Resource History
-```bash
-# View complete history of a user
-GET /api/audit/resource/User/12345
-
-# View all changes to a project
-GET /api/audit/resource/Project/789
-```
-
-### 4. Compliance Reporting
-```bash
-# Get monthly statistics
-GET /api/audit/stats?startDate=2024-01-01&endDate=2024-01-31
-
-# Export all audit logs
-GET /api/audit/logs?limit=10000
-```
+Ensure audit logs comply with:
+- GDPR (right to be forgotten)
+- CCPA (data access rights)
+- Local data protection laws
 
 ---
 
-## 🚀 Testing
+## Best Practices
 
-```bash
-# Login as SuperAdmin first
-TOKEN="your-superadmin-token"
+### For Developers
 
-# Get recent activity
-curl -X GET http://localhost:8000/api/audit/recent \
-  -H "Authorization: Bearer $TOKEN"
+1. **Log Critical Actions**: Always log create, update, delete operations
+2. **Meaningful Details**: Write clear, human-readable descriptions
+3. **Include Context**: Add relevant metadata (IDs, before/after values)
+4. **Error Logging**: Log both successes and failures
+5. **Avoid Spam**: Don't log every single read operation
 
-# Get audit statistics
-curl -X GET http://localhost:8000/api/audit/stats \
-  -H "Authorization: Bearer $TOKEN"
+### For Administrators
 
-# Get all logs with filters
-curl -X GET "http://localhost:8000/api/audit/logs?action=DELETE&limit=20" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Get specific user's activity
-curl -X GET http://localhost:8000/api/audit/user/12345 \
-  -H "Authorization: Bearer $TOKEN"
-```
+1. **Regular Review**: Check logs weekly for suspicious activity
+2. **Monitor Failed Logins**: Investigate multiple failed attempts
+3. **Track Admin Actions**: Pay attention to delete/role change operations
+4. **Export Reports**: Generate monthly audit reports
+5. **Set Alerts**: Configure alerts for critical actions
 
 ---
 
-## 🎯 What Gets Logged
+## Monitoring & Alerts
 
-### Authentication Events
-- ✅ User registration
-- ✅ Login (success/failure)
-- ✅ Logout
-- ✅ Password reset
-- ✅ Email verification
+### Recommended Alert Triggers
 
-### User Management
-- ✅ Profile updates
-- ✅ Role changes
-- ✅ Account activation/deactivation
-- ✅ User deletion (soft delete)
+Set up alerts for:
 
-### Future Microservices
-All future microservices will automatically log:
-- ✅ CREATE operations
-- ✅ UPDATE operations
-- ✅ DELETE operations (soft delete)
-- ✅ Any sensitive actions
+- **Security**:
+  - 5+ failed login attempts from same IP
+  - User role changes
+  - Account deletions
+  - Unauthorized access attempts
 
----
+- **Operations**:
+  - Bulk deletions
+  - Configuration changes
+  - Database migrations
+  - API errors spike
 
-## 📁 Files Created/Modified
+- **Compliance**:
+  - Data exports
+  - User data deletions
+  - Admin access outside business hours
 
-### New Files
-- `Src/drizzle/schema.ts` - Added `auditLogs` table and soft delete fields
-- `Src/Middleware/auditLogger.ts` - Audit logging service
-- `Src/Audit/audit.controller.ts` - Audit endpoints controller
-- `Src/Audit/audit.routes.ts` - Audit routes
+### Example Alert Configuration
 
-### Modified Files
-- `Src/Users/users.service.ts` - Soft delete implementation
-- `Src/Users/users.controller.ts` - Audit logging integration
-- `Src/Auth/auth.controller.ts` - Auth event logging
-- `Src/app.ts` - Registered audit routes
-
----
-
-## 🔄 Migration Required
-
-Run these commands to apply database changes:
-
-```bash
-# Generate migration
-pnpm run gen
-
-# Apply migration
-pnpm run push
-
-# Build project
-pnpm run build
-
-# Start server
-pnpm run dev
+```yaml
+alerts:
+  - name: "Multiple Failed Logins"
+    condition: "action = 'LOGIN_FAILED' AND count > 5 IN last 10 minutes"
+    action: "send_email_to_admin"
+    
+  - name: "User Deletion"
+    condition: "action = 'DELETE_USER'"
+    action: "send_email_and_slack_notification"
+    
+  - name: "Role Change"
+    condition: "action = 'UPDATE_ROLE'"
+    action: "log_to_security_channel"
 ```
 
 ---
 
-## 💡 Best Practices
+## Exporting Audit Logs
 
-1. **Always log sensitive operations** (delete, role change, etc.)
-2. **Include meaningful descriptions** in audit logs
-3. **Log both success and failure** with error messages
-4. **Use soft delete** for all user-facing deletions
-5. **Exclude soft-deleted records** in default queries
-6. **Provide restore functionality** for SuperAdmin (future enhancement)
+### CSV Export
+
+```bash
+# Export logs as CSV
+curl -X GET "http://localhost:3000/api/audit/export?format=csv&startDate=2024-11-01&endDate=2024-11-17" \
+  -H 'Authorization: Bearer ADMIN_TOKEN' \
+  -o audit-logs.csv
+```
+
+### JSON Export
+
+```bash
+# Export logs as JSON
+curl -X GET "http://localhost:3000/api/audit/export?format=json" \
+  -H 'Authorization: Bearer ADMIN_TOKEN' \
+  -o audit-logs.json
+```
 
 ---
 
-## 🎨 Summary
+## Database Schema
 
-✅ **Audit System**: Complete logging of all user actions
-✅ **Soft Delete**: Safe deletion with recovery capability
-✅ **SuperAdmin Oversight**: Full visibility into system activity
-✅ **Security**: IP tracking, user agents, success/failure logging
-✅ **Compliance**: Immutable audit trail for regulations
-✅ **Scalable**: Easy to extend to all future microservices
+```sql
+CREATE TABLE auditLogs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  userId UUID REFERENCES users(id) ON DELETE SET NULL,
+  action VARCHAR(100) NOT NULL,
+  details TEXT NOT NULL,
+  ipAddress VARCHAR(50),
+  userAgent TEXT,
+  metadata JSONB,
+  timestamp TIMESTAMP DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_audit_user ON auditLogs(userId);
+CREATE INDEX idx_audit_action ON auditLogs(action);
+CREATE INDEX idx_audit_timestamp ON auditLogs(timestamp);
+CREATE INDEX idx_audit_ip ON auditLogs(ipAddress);
+```
+
+---
+
+## Troubleshooting
+
+### Logs Not Appearing
+
+1. Check middleware is properly registered
+2. Verify database connection
+3. Check user permissions
+4. Look for errors in console
+
+### Performance Issues
+
+1. Add database indexes
+2. Implement log rotation
+3. Archive old logs
+4. Use pagination
+
+### Missing User Information
+
+1. Verify JWT token is valid
+2. Check user still exists in database
+3. Confirm userId is passed correctly
+
+---
+
+## Examples
+
+### Get Recent Failed Logins
+
+```bash
+curl -X GET "http://localhost:3000/api/audit/logs?action=LOGIN_FAILED&limit=10" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+```
+
+### Track User Activity for Investigation
+
+```bash
+curl -X GET "http://localhost:3000/api/audit/user/SUSPICIOUS_USER_ID?startDate=2024-11-01" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+```
+
+### Generate Monthly Report
+
+```bash
+curl -X GET "http://localhost:3000/api/audit/stats?startDate=2024-11-01&endDate=2024-11-30&period=day" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+```
+
+### JavaScript Dashboard Integration
+
+```javascript
+// Fetch recent audit logs
+const getRecentLogs = async () => {
+  const response = await fetch('/api/audit/logs?limit=20', {
+    headers: {
+      'Authorization': `Bearer ${adminToken}`
+    }
+  });
+  const data = await response.json();
+  return data.data.logs;
+};
+
+// Get user activity
+const getUserActivity = async (userId) => {
+  const response = await fetch(`/api/audit/user/${userId}`, {
+    headers: {
+      'Authorization': `Bearer ${adminToken}`
+    }
+  });
+  return await response.json();
+};
+
+// Monitor specific action
+const monitorAction = async (action) => {
+  const response = await fetch(`/api/audit/logs?action=${action}&limit=50`, {
+    headers: {
+      'Authorization': `Bearer ${adminToken}`
+    }
+  });
+  return await response.json();
+};
+```
+
+---
+
+## Related Documentation
+
+- [Users API](./USERS_API.md)
+- [Authentication API](./docs/AUTH_API.md)
+- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
+- [Security Best Practices](./docs/SECURITY.md)
+
+---
+
+## Future Enhancements
+
+Planned features:
+
+- [ ] Real-time audit log streaming
+- [ ] Advanced analytics dashboard
+- [ ] Automated threat detection
+- [ ] Log aggregation and correlation
+- [ ] Integration with SIEM systems
+- [ ] Audit log signing (tamper-proof)
+- [ ] Custom alert rules
+- [ ] Audit report templates
+
+---
+
+## Support
+
+For audit system questions:
+- Check Swagger documentation: http://localhost:3000/api-docs
+- GitHub Issues: [Report issues](https://github.com)
+- Security concerns: security@bitsa.com
+- General support: admin@bitsa.com

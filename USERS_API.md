@@ -1,518 +1,534 @@
-# Users Microservice
+# Users API Reference
 
 ## Overview
-Complete Users microservice with comprehensive endpoints for user management. All user identification uses `schoolId` (NOT the random UUID `id`).
 
-## Authentication Levels
-- 🔓 **Public**: No authentication required
-- 🔐 **Authenticated**: Any logged-in user
-- 👤 **Self or Admin**: User can access their own data, or admin can access any
-- 🛡️ **Admin**: Admin or SuperAdmin role required
-- 👑 **SuperAdmin**: SuperAdmin role only
+The Users API provides endpoints for user management, profile operations, and authentication-related functions.
+
+**Base URL**: `/api/users`
+
+---
+
+## Authentication
+
+All user endpoints require JWT Bearer token authentication unless specified otherwise.
+
+```bash
+Authorization: Bearer <your-jwt-token>
+```
+
+---
 
 ## Endpoints
 
 ### 1. Get Current User Profile
-**GET** `/api/users/me` 🔐
 
-Returns the authenticated user's profile.
+Get the profile of the currently authenticated user.
 
-**Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Endpoint**: `GET /api/users/me`
 
-**Response:**
+**Authentication**: Required
+
+**Response**:
 ```json
 {
-  "user": {
+  "success": true,
+  "data": {
     "id": "uuid",
-    "schoolId": "12345",
+    "schoolId": "SCT211-0001/2021",
+    "email": "student@example.com",
     "firstName": "John",
     "lastName": "Doe",
-    "email": "john@example.com",
     "major": "Software Engineering",
     "yearOfStudy": 3,
     "role": "student",
+    "preferredLanguage": "en",
+    "profilePicture": "https://...",
     "isActive": true,
     "emailVerified": true,
-    "profilePicture": "https://...",
-    "bio": "CS student passionate about AI",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
+    "createdAt": "2024-01-15T10:00:00Z"
   }
 }
 ```
 
+**Example**:
+```bash
+curl -X GET http://localhost:3000/api/users/me \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+```
+
 ---
 
-### 2. Update Current User Profile
-**PUT** `/api/users/me` 🔐
+### 2. Update User Profile
 
-Updates the authenticated user's profile information.
+Update the current user's profile information.
 
-**Request Body:**
+**Endpoint**: `PUT /api/users/me`
+
+**Authentication**: Required
+
+**Request Body**:
 ```json
 {
   "firstName": "John",
   "lastName": "Doe",
-  "bio": "Updated bio",
-  "profilePicture": "https://example.com/pic.jpg",
-  "yearOfStudy": 4,
   "major": "Software Engineering",
-  "customMajor": "AI & Machine Learning"
+  "yearOfStudy": 3,
+  "profilePicture": "https://example.com/photo.jpg",
+  "bio": "Passionate about AI and Web Development"
 }
 ```
 
-**Response:**
+**Response**:
 ```json
 {
-  "message": "Profile updated successfully",
-  "user": { /* updated user object */ }
-}
-```
-
----
-
-### 3. Update Profile Picture
-**PUT** `/api/users/me/profile-picture` 🔐
-
-Updates only the profile picture.
-
-**Request Body:**
-```json
-{
-  "profilePicture": "https://example.com/new-pic.jpg"
-}
-```
-
----
-
-### 4. Update Bio
-**PUT** `/api/users/me/bio` 🔐
-
-Updates only the bio (max 500 characters).
-
-**Request Body:**
-```json
-{
-  "bio": "New bio text here"
-}
-```
-
----
-
-### 5. Search Users
-**GET** `/api/users/search?q=john&limit=10` 🔐
-
-Search users by name, email, or school ID.
-
-**Query Parameters:**
-- `q` (required): Search term
-- `limit` (optional): Max results (default: 10)
-
-**Response:**
-```json
-{
-  "users": [
-    {
-      "id": "uuid",
-      "schoolId": "12345",
-      "firstName": "John",
-      "lastName": "Doe",
-      "email": "john@example.com",
-      "profilePicture": "https://...",
-      "major": "Software Engineering",
-      "yearOfStudy": 3,
-      "role": "student"
-    }
-  ],
-  "count": 5
-}
-```
-
----
-
-### 6. Get User by School ID
-**GET** `/api/users/:schoolId` 👤
-
-Get user profile by school ID (self or admin only).
-
-**Example:** `GET /api/users/12345`
-
-**Response:**
-```json
-{
-  "user": { /* user object */ }
-}
-```
-
-**Access Control:**
-- Users can view their own profile
-- Admins can view any profile
-
----
-
-### 7. Get All Users (Admin)
-**GET** `/api/users` 🛡️
-
-Get paginated list of all users with filters.
-
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Users per page (default: 10, max: 100)
-- `role` (optional): Filter by role (student/admin/superadmin)
-- `major` (optional): Filter by major
-- `search` (optional): Search term
-
-**Example:** `GET /api/users?page=1&limit=20&role=student&major=Software Engineering&search=john`
-
-**Response:**
-```json
-{
-  "users": [ /* array of users */ ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 150,
-    "totalPages": 8
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "firstName": "John",
+    "lastName": "Doe",
+    "major": "Software Engineering",
+    "yearOfStudy": 3,
+    "profilePicture": "https://example.com/photo.jpg",
+    "updatedAt": "2024-11-17T14:30:00Z"
   }
 }
 ```
 
+**Example**:
+```bash
+curl -X PUT http://localhost:3000/api/users/me \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "firstName": "John",
+    "lastName": "Doe",
+    "yearOfStudy": 4
+  }'
+```
+
 ---
 
-### 8. Get User Statistics (Admin)
-**GET** `/api/users/stats` 🛡️
+### 3. Update Language Preference
 
-Get comprehensive user statistics.
+Change the user's preferred language for content display.
 
-**Response:**
+**Endpoint**: `PUT /api/users/me/language`
+
+**Authentication**: Required
+
+**Request Body**:
 ```json
 {
-  "stats": {
-    "total": 500,
-    "active": 480,
-    "verified": 450,
-    "byRole": [
-      { "role": "student", "count": 450 },
-      { "role": "admin", "count": 48 },
-      { "role": "superadmin", "count": 2 }
+  "language": "sw"
+}
+```
+
+**Supported Languages**:
+- `en` - English
+- `sw` - Kiswahili (Swahili)
+- `fr` - Français (French)
+- `id` - Bahasa Indonesia
+- `de` - Deutsch (German)
+- `es` - Español (Spanish)
+- `it` - Italiano (Italian)
+- `pt` - Português (Portuguese)
+- `ja` - 日本語 (Japanese)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Language preference updated successfully",
+    "language": "sw"
+  }
+}
+```
+
+**Example**:
+```bash
+curl -X PUT http://localhost:3000/api/users/me/language \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"language": "fr"}'
+```
+
+---
+
+### 4. Get All Users (Admin)
+
+Retrieve a list of all registered users.
+
+**Endpoint**: `GET /api/users/all`
+
+**Authentication**: Required (Admin or SuperAdmin only)
+
+**Query Parameters**:
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20)
+- `role` (optional): Filter by role (`student`, `admin`, `superadmin`)
+- `search` (optional): Search by name or email
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": "uuid",
+        "schoolId": "SCT211-0001/2021",
+        "email": "student@example.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "major": "Software Engineering",
+        "yearOfStudy": 3,
+        "role": "student",
+        "isActive": true,
+        "emailVerified": true,
+        "createdAt": "2024-01-15T10:00:00Z"
+      }
     ],
-    "byMajor": [
-      { "major": "Software Engineering", "count": 200 },
-      { "major": "Computer Science", "count": 150 },
-      /* ... */
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 150,
+      "pages": 8
+    }
+  }
+}
+```
+
+**Example**:
+```bash
+# Get all users
+curl -X GET http://localhost:3000/api/users/all \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+
+# Filter by role
+curl -X GET "http://localhost:3000/api/users/all?role=student&page=1&limit=10" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+
+# Search users
+curl -X GET "http://localhost:3000/api/users/all?search=john" \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
+```
+
+---
+
+### 5. Get User by ID (Admin)
+
+Get detailed information about a specific user.
+
+**Endpoint**: `GET /api/users/:id`
+
+**Authentication**: Required (Admin or SuperAdmin only)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "schoolId": "SCT211-0001/2021",
+    "email": "student@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "major": "Software Engineering",
+    "yearOfStudy": 3,
+    "role": "student",
+    "preferredLanguage": "en",
+    "profilePicture": "https://...",
+    "isActive": true,
+    "emailVerified": true,
+    "createdAt": "2024-01-15T10:00:00Z",
+    "interests": [
+      {
+        "id": "uuid",
+        "name": "Machine Learning"
+      },
+      {
+        "id": "uuid",
+        "name": "Web Development"
+      }
+    ],
+    "projects": [
+      {
+        "id": "uuid",
+        "title": "Smart Campus App",
+        "status": "in-progress"
+      }
     ]
   }
 }
 ```
 
----
-
-### 9. Get Users by Role (Admin)
-**GET** `/api/users/role/:role` 🛡️
-
-Get all users with specific role.
-
-**Example:** `GET /api/users/role/student`
-
-**Valid Roles:** `student`, `admin`, `superadmin`
-
-**Response:**
-```json
-{
-  "users": [ /* array of users */ ],
-  "count": 450
-}
+**Example**:
+```bash
+curl -X GET http://localhost:3000/api/users/USER_ID \
+  -H 'Authorization: Bearer ADMIN_TOKEN'
 ```
 
 ---
 
-### 10. Get Users by Major
-**GET** `/api/users/major/:major` 🔐
+### 6. Update User Status (Admin)
 
-Get all users with specific major.
+Activate or deactivate a user account.
 
-**Example:** `GET /api/users/major/Software%20Engineering`
+**Endpoint**: `PUT /api/users/:id/status`
 
-**Response:**
+**Authentication**: Required (Admin or SuperAdmin only)
+
+**Request Body**:
 ```json
 {
-  "users": [ /* array of users */ ],
-  "count": 200
+  "isActive": false
 }
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "User status updated successfully",
+    "isActive": false
+  }
+}
+```
+
+**Example**:
+```bash
+curl -X PUT http://localhost:3000/api/users/USER_ID/status \
+  -H 'Authorization: Bearer ADMIN_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"isActive": false}'
 ```
 
 ---
 
-### 11. Update User by School ID (Admin)
-**PUT** `/api/users/:schoolId` 🛡️
-
-Admin can update any user's profile.
-
-**Example:** `PUT /api/users/12345`
-
-**Request Body:**
-```json
-{
-  "firstName": "Updated",
-  "lastName": "Name",
-  "yearOfStudy": 4,
-  "isActive": true
-}
-```
-
----
-
-### 12. Update User Role (Admin)
-**PUT** `/api/users/:schoolId/role` 🛡️
-
-Update a user's role.
-
-**Request Body:**
-```json
-{
-  "role": "admin"
-}
-```
-
-**Permission Rules:**
-- Only SuperAdmin can assign SuperAdmin role
-- Admin can assign student or admin roles
-
----
-
-### 13. Deactivate User
-**PUT** `/api/users/:schoolId/deactivate` 👤
-
-Deactivate a user account (self or admin).
-
-**Access Control:**
-- Users can deactivate their own account
-- Admins can deactivate any account
-
-**Response:**
-```json
-{
-  "message": "User deactivated successfully",
-  "user": { /* updated user */ }
-}
-```
-
----
-
-### 14. Activate User (Admin)
-**PUT** `/api/users/:schoolId/activate` 🛡️
-
-Reactivate a deactivated user account.
-
-**Response:**
-```json
-{
-  "message": "User activated successfully",
-  "user": { /* updated user */ }
-}
-```
-
----
-
-### 15. Delete User (SuperAdmin)
-**DELETE** `/api/users/:schoolId` 👑
+### 7. Delete User (SuperAdmin)
 
 Permanently delete a user account.
 
-**Response:**
+**Endpoint**: `DELETE /api/users/:id`
+
+**Authentication**: Required (SuperAdmin only)
+
+**Response**:
 ```json
 {
-  "message": "User deleted successfully"
+  "success": true,
+  "data": {
+    "message": "User deleted successfully"
+  }
 }
+```
+
+**Example**:
+```bash
+curl -X DELETE http://localhost:3000/api/users/USER_ID \
+  -H 'Authorization: Bearer SUPERADMIN_TOKEN'
 ```
 
 ---
 
-## Data Model
+## User Roles
 
-### User Object (Public View)
-```typescript
-{
-  id: string;              // UUID (internal use)
-  schoolId: string;        // Primary identifier (12345)
-  isInternal: boolean;     // Internal/external student
-  schoolName: string;      // School name
-  email: string;
-  firstName: string;
-  lastName: string;
-  major: string;           // Enum value
-  customMajor?: string;    // If major is "Other"
-  yearOfStudy: number;     // 1-7
-  role: string;            // student/admin/superadmin
-  isActive: boolean;
-  profilePicture?: string;
-  bio?: string;
-  emailVerified: boolean;
-  lastLogin?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+### Role Hierarchy
 
-**Excluded from responses:**
-- `passwordHash`
-- `verificationToken` / `verificationTokenExpiry`
-- `resetToken` / `resetTokenExpiry`
-- `refreshToken` / `refreshTokenExpiry`
+1. **student** - Regular users
+   - Can view content
+   - Can submit projects
+   - Can update own profile
+   - Can set interests
+
+2. **admin** - Content managers
+   - All student permissions
+   - Can create/edit blogs, events, reports
+   - Can view all users
+   - Can manage communities and partners
+
+3. **superadmin** - System administrators
+   - All admin permissions
+   - Can manage user roles
+   - Can delete users
+   - Can view audit logs
+   - Full system access
 
 ---
 
 ## Error Responses
 
-### 401 Unauthorized
+All endpoints return standardized error responses:
+
 ```json
 {
-  "error": "Invalid or expired token - Access denied."
+  "success": false,
+  "error": "Error message description"
 }
 ```
 
-### 403 Forbidden
-```json
-{
-  "error": "Access denied: You do not have the required permissions."
-}
-```
+### Common Error Codes
 
-### 404 Not Found
-```json
-{
-  "error": "User not found"
-}
-```
+- `400` - Bad Request (invalid input)
+- `401` - Unauthorized (missing/invalid token)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found (user doesn't exist)
+- `500` - Internal Server Error
 
-### 400 Bad Request
-```json
-{
-  "error": "Invalid input",
-  "details": [ /* validation errors */ ]
-}
+---
+
+## Multi-Language Support
+
+### How Language Preference Works
+
+1. User sets preferred language via `PUT /api/users/me/language`
+2. Language is stored in `preferredLanguage` field
+3. Content endpoints automatically return translations based on:
+   - User's `preferredLanguage` setting
+   - Query parameter: `?lang=sw`
+   - Accept-Language header
+   - Default: English (`en`)
+
+### Example Workflow
+
+```bash
+# 1. Set language preference to Swahili
+curl -X PUT http://localhost:3000/api/users/me/language \
+  -H 'Authorization: Bearer TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"language": "sw"}'
+
+# 2. Fetch blogs (automatically returns Swahili versions)
+curl -X GET http://localhost:3000/api/blogs \
+  -H 'Authorization: Bearer TOKEN'
+
+# 3. Override with query parameter (get French version)
+curl -X GET "http://localhost:3000/api/blogs?lang=fr" \
+  -H 'Authorization: Bearer TOKEN'
 ```
 
 ---
 
-## Testing with curl
+## Rate Limiting
 
-### Get Own Profile
-```bash
-curl -X GET http://localhost:8000/api/users/me \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
+**Current Status**: Not implemented (planned for future release)
 
-### Update Profile
-```bash
-curl -X PUT http://localhost:8000/api/users/me \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "John",
-    "bio": "Updated bio"
-  }'
-```
-
-### Search Users
-```bash
-curl -X GET "http://localhost:8000/api/users/search?q=john&limit=5" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
-### Get All Users (Admin)
-```bash
-curl -X GET "http://localhost:8000/api/users?page=1&limit=10&role=student" \
-  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN"
-```
-
-### Update User Role (Admin)
-```bash
-curl -X PUT http://localhost:8000/api/users/12345/role \
-  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"role": "admin"}'
-```
+**Planned Limits**:
+- Authenticated users: 1000 requests/hour
+- Unauthenticated: 100 requests/hour
+- Admin users: 5000 requests/hour
 
 ---
 
-## Integration with Frontend
+## Best Practices
 
-### React/Next.js Example
+### Security
 
-```typescript
-// Get current user
-const getProfile = async () => {
-  const response = await fetch('http://localhost:8000/api/users/me', {
+1. **Never expose tokens**: Store JWT tokens securely
+2. **Use HTTPS**: Always use HTTPS in production
+3. **Token expiration**: Tokens expire after 24 hours
+4. **Password requirements**: Minimum 6 characters
+
+### Performance
+
+1. **Pagination**: Use pagination for large lists
+2. **Selective fields**: Request only needed data
+3. **Caching**: Cache user profiles on client side
+
+### Error Handling
+
+```javascript
+// Good error handling example
+try {
+  const response = await fetch('/api/users/me', {
     headers: {
-      'Authorization': `Bearer ${accessToken}`
+      'Authorization': `Bearer ${token}`
     }
   });
-  return response.json();
+  
+  const data = await response.json();
+  
+  if (!data.success) {
+    console.error('Error:', data.error);
+    // Handle error appropriately
+  }
+  
+  return data.data;
+} catch (error) {
+  console.error('Network error:', error);
+  // Handle network error
+}
+```
+
+---
+
+## Testing
+
+### Using curl
+
+```bash
+# Set token variable
+TOKEN="your-jwt-token-here"
+
+# Get profile
+curl -X GET http://localhost:3000/api/users/me \
+  -H "Authorization: Bearer $TOKEN"
+
+# Update profile
+curl -X PUT http://localhost:3000/api/users/me \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"yearOfStudy": 4}'
+```
+
+### Using JavaScript/Fetch
+
+```javascript
+const token = localStorage.getItem('token');
+
+// Get user profile
+const getProfile = async () => {
+  const response = await fetch('http://localhost:3000/api/users/me', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  const data = await response.json();
+  return data.data;
 };
 
-// Update profile
-const updateProfile = async (updates) => {
-  const response = await fetch('http://localhost:8000/api/users/me', {
+// Update language
+const updateLanguage = async (language) => {
+  const response = await fetch('http://localhost:3000/api/users/me/language', {
     method: 'PUT',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(updates)
+    body: JSON.stringify({ language })
   });
-  return response.json();
-};
-
-// Search users
-const searchUsers = async (query) => {
-  const response = await fetch(
-    `http://localhost:8000/api/users/search?q=${encodeURIComponent(query)}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    }
-  );
-  return response.json();
+  
+  return await response.json();
 };
 ```
 
 ---
 
-## Security Features
+## Related Documentation
 
-✅ **JWT Authentication** - All endpoints protected with JWT tokens
-✅ **Role-based Access Control** - Different permissions for student/admin/superadmin
-✅ **Self-access Control** - Users can only modify their own data (unless admin)
-✅ **Sensitive Data Exclusion** - Passwords and tokens never exposed in responses
-✅ **Input Validation** - All inputs validated with Zod schemas
-✅ **SQL Injection Protection** - Using Drizzle ORM with parameterized queries
+- [Authentication API](./docs/AUTH_API.md)
+- [Interests & Projects API](./INTERESTS_PROJECTS_API.md)
+- [Main README](./README.md)
+- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
 
 ---
 
-## Common Use Cases
+## Support
 
-### User Profile Page
-1. `GET /api/users/me` - Load user profile
-2. `PUT /api/users/me` - Update profile
-3. `PUT /api/users/me/profile-picture` - Upload new picture
-
-### Admin Dashboard
-1. `GET /api/users/stats` - Show statistics
-2. `GET /api/users` - List all users with filters
-3. `PUT /api/users/:schoolId/role` - Promote users
-4. `PUT /api/users/:schoolId/activate` - Activate accounts
-
-### User Directory/Search
-1. `GET /api/users/search?q=term` - Search users
-2. `GET /api/users/major/:major` - Browse by major
-3. `GET /api/users/:schoolId` - View specific profile
-
-### Account Management
-1. `PUT /api/users/:schoolId/deactivate` - Deactivate account
-2. `PUT /api/users/:schoolId/activate` - Reactivate account (admin)
-3. `DELETE /api/users/:schoolId` - Delete account (superadmin)
+For issues or questions:
+- Check Swagger docs: http://localhost:3000/api-docs
+- GitHub Issues: [Report a bug](https://github.com)
+- Email: admin@bitsa.com

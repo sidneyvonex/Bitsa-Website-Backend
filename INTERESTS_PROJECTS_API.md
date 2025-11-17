@@ -1,347 +1,766 @@
-# Interests & Projects API - Quick Reference
+# Interests & Projects API Reference
 
-## 🎯 Overview
+## Overview
 
-### Interests Microservice
-- **Purpose**: Students select interests on first login to personalize their experience
-- **First Thing Students See**: Interest selection screen if not selected yet
-- **Features**: CRUD for interests (Admin), Select/manage interests (Students), Find users by interest
+The Interests & Projects API manages user technology interests and student project submissions.
 
-### Projects Microservice
-- **Purpose**: Students submit projects, Admins can post/feature good projects
-- **Features**: Full CRUD, Status management (submitted/approved/featured), Browse/search projects
+**Base URLs**:
+- Interests: `/api/interests`
+- Projects: `/api/projects`
 
 ---
 
-## 📋 Interests API Endpoints
+## Interests API
 
-### Student Endpoints
+### 1. Get All Interests
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/interests` | Get all available interests (for selection) | Student/Admin |
-| `GET` | `/api/interests/my` | Get my selected interests | Student/Admin |
-| `GET` | `/api/interests/my/check` | Check if I have selected interests | Student/Admin |
-| `POST` | `/api/interests/my` | Add interests to my profile | Student/Admin |
-| `PUT` | `/api/interests/my` | Replace all my interests | Student/Admin |
-| `DELETE` | `/api/interests/my/:interestId` | Remove an interest from my profile | Student/Admin |
-| `GET` | `/api/interests/:interestId/users` | Get users with this interest | Student/Admin |
+Retrieve list of all available technology interests.
 
-### Admin Endpoints
+**Endpoint**: `GET /api/interests`
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/interests/admin/all` | Get all interests (full list) | Admin |
-| `GET` | `/api/interests/admin/stats` | Get interest statistics | Admin |
-| `GET` | `/api/interests/admin/:id` | Get interest by ID | Admin |
-| `POST` | `/api/interests/admin` | Create new interest | Admin |
-| `PUT` | `/api/interests/admin/:id` | Update interest | Admin |
-| `DELETE` | `/api/interests/admin/:id` | Delete interest | Admin |
+**Authentication**: Not required
 
----
-
-## 📋 Projects API Endpoints
-
-### Public/Student Endpoints
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/projects` | Get all projects (paginated) | Student/Admin |
-| `GET` | `/api/projects/featured` | Get featured/approved projects | Student/Admin |
-| `GET` | `/api/projects/:id` | Get project by ID | Student/Admin |
-| `GET` | `/api/projects/my/all` | Get my projects | Student/Admin |
-| `POST` | `/api/projects/create` | Create new project | Student/Admin |
-| `PUT` | `/api/projects/:id` | Update project (own or admin) | Student/Admin |
-| `DELETE` | `/api/projects/:id` | Delete project (own or admin) | Student/Admin |
-
-### Admin Endpoints
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| `GET` | `/api/projects/admin/stats` | Get project statistics | Admin |
-| `PATCH` | `/api/projects/admin/:id/status` | Update project status | Admin |
-| `GET` | `/api/projects/admin/user/:schoolId` | Get user's projects | Admin |
-
----
-
-## 💻 Usage Examples
-
-### Check if Student Needs Interest Selection
-
-```bash
-# First call after login
-curl -X GET http://localhost:8000/api/interests/my/check \
-  -H "Authorization: Bearer $TOKEN"
-
-# Response:
+**Response**:
+```json
 {
-  "hasInterests": false,
-  "count": 0,
-  "needsToSelectInterests": true
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Machine Learning",
+      "createdAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "uuid",
+      "name": "Web Development",
+      "createdAt": "2024-01-01T00:00:00Z"
+    }
+  ]
 }
 ```
 
-### Student Selects Interests (First Time)
-
+**Example**:
 ```bash
-# Get all available interests
-curl -X GET http://localhost:8000/api/interests?limit=50 \
-  -H "Authorization: Bearer $TOKEN"
+curl -X GET http://localhost:3000/api/interests
+```
 
-# Select interests
-curl -X POST http://localhost:8000/api/interests/my \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
+---
+
+### 2. Add User Interests
+
+Add interests to the current user's profile.
+
+**Endpoint**: `POST /api/interests/my`
+
+**Authentication**: Required
+
+**Request Body**:
+```json
+{
+  "interestIds": [
+    "interest-uuid-1",
+    "interest-uuid-2",
+    "interest-uuid-3"
+  ]
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Interests added successfully",
+    "count": 3
+  }
+}
+```
+
+**Example**:
+```bash
+curl -X POST http://localhost:3000/api/interests/my \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
   -d '{
-    "interestIds": [
-      "uuid-machine-learning",
-      "uuid-web-development",
-      "uuid-mobile-apps"
-    ]
+    "interestIds": ["uuid-1", "uuid-2"]
   }'
 ```
 
-### Student Creates Project
+---
 
-```bash
-curl -X POST http://localhost:8000/api/projects/create \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Smart Campus App",
-    "description": "Mobile app for campus navigation and services",
-    "problemStatement": "Students struggle to find their way around campus",
-    "proposedSolution": "GPS-based navigation with AR features",
-    "techStack": "React Native, Node.js, PostgreSQL",
-    "githubUrl": "https://github.com/user/campus-app"
-  }'
+### 3. Get My Interests
+
+Get list of interests for the current user.
+
+**Endpoint**: `GET /api/interests/my`
+
+**Authentication**: Required
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Machine Learning",
+      "addedAt": "2024-02-15T10:00:00Z"
+    },
+    {
+      "id": "uuid",
+      "name": "Cybersecurity",
+      "addedAt": "2024-02-15T10:00:00Z"
+    }
+  ]
+}
 ```
 
-### Admin Posts Featured Project
-
+**Example**:
 ```bash
-curl -X POST http://localhost:8000/api/projects/create \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Award-Winning AI Project",
-    "description": "This project won first place at Hackathon 2024",
-    "techStack": "Python, TensorFlow, Flask",
-    "status": "featured",
-    "githubUrl": "https://github.com/winner/ai-project"
-  }'
+curl -X GET http://localhost:3000/api/interests/my \
+  -H 'Authorization: Bearer YOUR_TOKEN'
 ```
 
-### Admin Approves/Features Project
+---
 
-```bash
-# Change status to featured
-curl -X PATCH http://localhost:8000/api/projects/admin/:projectId/status \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"status": "featured"}'
+### 4. Remove User Interest
+
+Remove an interest from the current user's profile.
+
+**Endpoint**: `DELETE /api/interests/my/:interestId`
+
+**Authentication**: Required
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Interest removed successfully"
+  }
+}
 ```
 
-### Browse Featured Projects
-
+**Example**:
 ```bash
-curl -X GET http://localhost:8000/api/projects/featured?limit=10 \
-  -H "Authorization: Bearer $TOKEN"
+curl -X DELETE http://localhost:3000/api/interests/my/INTEREST_ID \
+  -H 'Authorization: Bearer YOUR_TOKEN'
 ```
 
-### Search Projects
+---
 
+### 5. Create Interest (Admin)
+
+Add a new technology interest to the system.
+
+**Endpoint**: `POST /api/interests`
+
+**Authentication**: Required (Admin or SuperAdmin)
+
+**Request Body**:
+```json
+{
+  "name": "Quantum Computing"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "Quantum Computing",
+    "createdAt": "2024-11-17T14:30:00Z"
+  }
+}
+```
+
+**Example**:
 ```bash
-# Search by keyword
-curl -X GET "http://localhost:8000/api/projects?search=machine%20learning&page=1&limit=20" \
-  -H "Authorization: Bearer $TOKEN"
+curl -X POST http://localhost:3000/api/interests \
+  -H 'Authorization: Bearer ADMIN_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Quantum Computing"}'
+```
+
+---
+
+### 6. Update Interest (Admin)
+
+Update an existing interest name.
+
+**Endpoint**: `PUT /api/interests/:id`
+
+**Authentication**: Required (Admin or SuperAdmin)
+
+**Request Body**:
+```json
+{
+  "name": "Artificial Intelligence & ML"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "Artificial Intelligence & ML",
+    "updatedAt": "2024-11-17T14:30:00Z"
+  }
+}
+```
+
+---
+
+### 7. Delete Interest (Admin)
+
+Delete an interest from the system.
+
+**Endpoint**: `DELETE /api/interests/:id`
+
+**Authentication**: Required (Admin or SuperAdmin)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Interest deleted successfully"
+  }
+}
+```
+
+---
+
+## Projects API
+
+### 1. Get All Projects
+
+Retrieve list of all student projects.
+
+**Endpoint**: `GET /api/projects`
+
+**Authentication**: Not required
+
+**Query Parameters**:
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20)
+- `status` (optional): Filter by status (`submitted`, `in-progress`, `completed`)
+- `search` (optional): Search by title or description
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "projects": [
+      {
+        "id": "uuid",
+        "title": "Smart Campus Navigation System",
+        "description": "An AI-powered mobile application...",
+        "techStack": "React Native, TensorFlow, Firebase",
+        "status": "in-progress",
+        "githubUrl": "https://github.com/user/project",
+        "user": {
+          "id": "uuid",
+          "firstName": "John",
+          "lastName": "Doe"
+        },
+        "createdAt": "2024-03-15T10:00:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "pages": 3
+    }
+  }
+}
+```
+
+**Example**:
+```bash
+# Get all projects
+curl -X GET http://localhost:3000/api/projects
 
 # Filter by status
-curl -X GET "http://localhost:8000/api/projects?status=featured" \
-  -H "Authorization: Bearer $TOKEN"
+curl -X GET "http://localhost:3000/api/projects?status=completed&page=1"
+
+# Search projects
+curl -X GET "http://localhost:3000/api/projects?search=mobile"
 ```
 
 ---
 
-## 📊 Project Statuses
+### 2. Get My Projects
 
-| Status | Description | Who Can Set |
-|--------|-------------|-------------|
-| `submitted` | Default for student projects | Student (auto) |
-| `under_review` | Admin reviewing | Admin |
-| `approved` | Approved for display | Admin |
-| `rejected` | Not approved | Admin |
-| `featured` | Showcased on homepage | Admin |
+Get projects created by the current user.
+
+**Endpoint**: `GET /api/projects/my`
+
+**Authentication**: Required
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "title": "E-Learning Platform",
+      "description": "A comprehensive online learning system...",
+      "problemStatement": "Students lack access to quality education...",
+      "proposedSolution": "Build a web platform with video courses...",
+      "techStack": "Next.js, PostgreSQL, AWS",
+      "status": "in-progress",
+      "githubUrl": "https://github.com/user/elearning",
+      "images": "image1.jpg,image2.jpg",
+      "createdAt": "2024-05-20T10:00:00Z",
+      "updatedAt": "2024-11-10T15:30:00Z"
+    }
+  ]
+}
+```
+
+**Example**:
+```bash
+curl -X GET http://localhost:3000/api/projects/my \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+```
 
 ---
 
-## 🔄 Student Onboarding Flow
+### 3. Get Project by ID
 
-```
-1. Student logs in/registers
-   ↓
-2. Check /api/interests/my/check
-   ↓
-3. If needsToSelectInterests = true:
-   → Show interest selection screen
-   → GET /api/interests (get all available)
-   → POST /api/interests/my (save selections)
-   ↓
-4. Redirect to dashboard
-```
+Get detailed information about a specific project.
 
----
+**Endpoint**: `GET /api/projects/:id`
 
-## 🎨 Frontend Integration
+**Authentication**: Not required
 
-### Interest Selection Component
-
-```typescript
-// Check if user needs to select interests
-const checkInterests = async () => {
-  const response = await fetch('/api/interests/my/check', {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await response.json();
-  
-  if (data.needsToSelectInterests) {
-    // Show interest selection modal
-    showInterestSelectionScreen();
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "title": "Blockchain Certificate System",
+    "description": "Decentralized certificate verification system",
+    "problemStatement": "Academic certificate fraud is common...",
+    "proposedSolution": "Use blockchain for tamper-proof certificates...",
+    "techStack": "Ethereum, Solidity, React, IPFS",
+    "status": "completed",
+    "githubUrl": "https://github.com/user/blockchain-cert",
+    "proposalDocument": "https://docs.example.com/proposal.pdf",
+    "images": "demo1.png,demo2.png,demo3.png",
+    "user": {
+      "id": "uuid",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "major": "Computer Science",
+      "yearOfStudy": 4
+    },
+    "createdAt": "2024-01-10T10:00:00Z",
+    "updatedAt": "2024-10-30T14:20:00Z"
   }
-};
+}
+```
 
-// Save selected interests
-const saveInterests = async (interestIds: string[]) => {
-  await fetch('/api/interests/my', {
+**Example**:
+```bash
+curl -X GET http://localhost:3000/api/projects/PROJECT_ID
+```
+
+---
+
+### 4. Submit Project
+
+Create a new project submission.
+
+**Endpoint**: `POST /api/projects`
+
+**Authentication**: Required
+
+**Request Body**:
+```json
+{
+  "title": "Mental Health Support Platform",
+  "description": "A web platform connecting students with mental health resources",
+  "problemStatement": "Students face mental health challenges but don't know where to seek help",
+  "proposedSolution": "Create an anonymous platform with AI chatbot and counselor directory",
+  "techStack": "Next.js, Python, OpenAI API, PostgreSQL",
+  "githubUrl": "https://github.com/user/mental-health-platform",
+  "proposalDocument": "https://docs.google.com/document/d/...",
+  "images": "screenshot1.png,screenshot2.png"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "title": "Mental Health Support Platform",
+    "status": "submitted",
+    "createdAt": "2024-11-17T14:45:00Z"
+  }
+}
+```
+
+**Example**:
+```bash
+curl -X POST http://localhost:3000/api/projects \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "title": "Smart Parking System",
+    "description": "IoT-based parking management",
+    "techStack": "Arduino, React, Firebase"
+  }'
+```
+
+---
+
+### 5. Update Project
+
+Update an existing project (only by project owner or admin).
+
+**Endpoint**: `PUT /api/projects/:id`
+
+**Authentication**: Required (Owner or Admin)
+
+**Request Body**:
+```json
+{
+  "title": "Updated Project Title",
+  "description": "Updated description",
+  "status": "in-progress",
+  "techStack": "React Native, Node.js, MongoDB",
+  "githubUrl": "https://github.com/user/updated-repo"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "title": "Updated Project Title",
+    "status": "in-progress",
+    "updatedAt": "2024-11-17T15:00:00Z"
+  }
+}
+```
+
+**Example**:
+```bash
+curl -X PUT http://localhost:3000/api/projects/PROJECT_ID \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "status": "completed",
+    "githubUrl": "https://github.com/user/final-project"
+  }'
+```
+
+---
+
+### 6. Delete Project
+
+Delete a project (only by project owner or admin).
+
+**Endpoint**: `DELETE /api/projects/:id`
+
+**Authentication**: Required (Owner or Admin)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Project deleted successfully"
+  }
+}
+```
+
+**Example**:
+```bash
+curl -X DELETE http://localhost:3000/api/projects/PROJECT_ID \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+```
+
+---
+
+### 7. Update Project Status (Admin)
+
+Change project status (admin only).
+
+**Endpoint**: `PUT /api/projects/:id/status`
+
+**Authentication**: Required (Admin or SuperAdmin)
+
+**Request Body**:
+```json
+{
+  "status": "completed"
+}
+```
+
+**Status Options**:
+- `submitted` - Initial submission
+- `in-progress` - Work in progress
+- `completed` - Project finished
+- `rejected` - Not approved (admin only)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Project status updated",
+    "status": "completed"
+  }
+}
+```
+
+---
+
+## Project Status Workflow
+
+```
+submitted → in-progress → completed
+    ↓
+rejected (admin decision)
+```
+
+1. **submitted**: Student submits project
+2. **in-progress**: Student is actively working
+3. **completed**: Project is finished
+4. **rejected**: Admin rejects submission (rare)
+
+---
+
+## Available Technology Interests
+
+Default interests included in seed data:
+
+- Machine Learning
+- Artificial Intelligence
+- Web Development
+- Mobile App Development
+- Data Science
+- Cybersecurity
+- Cloud Computing
+- DevOps
+- Blockchain
+- Internet of Things (IoT)
+- Game Development
+- UI/UX Design
+- Database Management
+- Computer Networks
+- Software Testing
+- Algorithms
+- Computer Graphics
+- Natural Language Processing
+- Computer Vision
+- Robotics
+
+Admins can add more interests as needed.
+
+---
+
+## AI-Powered Project Feedback
+
+Use the AI API to get intelligent feedback on projects:
+
+**Endpoint**: `POST /api/ai/feedback/project`
+
+**Request**:
+```json
+{
+  "title": "Smart Campus Navigation",
+  "description": "AR-based campus navigation app",
+  "techStack": "React Native, TensorFlow, Firebase",
+  "problemStatement": "Students get lost on campus",
+  "proposedSolution": "Use AR for real-time navigation"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "overallFeedback": "Excellent project with strong technical foundation...",
+    "strengths": [
+      "Clear problem statement",
+      "Modern tech stack",
+      "Practical application"
+    ],
+    "improvements": [
+      "Consider offline functionality",
+      "Add accessibility features"
+    ],
+    "technicalSuggestions": [
+      "Implement caching for better performance",
+      "Use Redux for state management"
+    ],
+    "rating": 8.5,
+    "nextSteps": [
+      "Create prototype",
+      "Conduct user testing"
+    ]
+  }
+}
+```
+
+See [AI API Documentation](./docs/AI_API.md) for more details.
+
+---
+
+## Best Practices
+
+### For Students
+
+1. **Clear Descriptions**: Write detailed project descriptions
+2. **Problem-Solution**: Always state problem and your solution
+3. **Tech Stack**: List all technologies used
+4. **GitHub Repo**: Make repository public or add README
+5. **Regular Updates**: Update status as you progress
+6. **Documentation**: Include proposal document if available
+
+### For Admins
+
+1. **Review Projects**: Regularly check submissions
+2. **Provide Feedback**: Use comments to guide students
+3. **Status Management**: Keep project statuses up-to-date
+4. **Interest Curation**: Add relevant new interests
+5. **Quality Control**: Ensure project quality standards
+
+---
+
+## Error Responses
+
+```json
+{
+  "success": false,
+  "error": "Error message"
+}
+```
+
+**Common Errors**:
+- `400` - Invalid input (missing required fields)
+- `401` - Unauthorized (not logged in)
+- `403` - Forbidden (not project owner)
+- `404` - Project/Interest not found
+- `409` - Conflict (interest already added)
+- `500` - Server error
+
+---
+
+## Examples
+
+### Complete Project Submission Workflow
+
+```bash
+# 1. Get available interests
+curl -X GET http://localhost:3000/api/interests
+
+# 2. Add interests to profile
+curl -X POST http://localhost:3000/api/interests/my \
+  -H 'Authorization: Bearer TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"interestIds": ["interest-uuid-1", "interest-uuid-2"]}'
+
+# 3. Submit project
+curl -X POST http://localhost:3000/api/projects \
+  -H 'Authorization: Bearer TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "title": "My Awesome Project",
+    "description": "A revolutionary app...",
+    "techStack": "React, Node.js, MongoDB",
+    "githubUrl": "https://github.com/me/project"
+  }'
+
+# 4. Get AI feedback (optional)
+curl -X POST http://localhost:3000/api/ai/feedback/project \
+  -H 'Authorization: Bearer TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "title": "My Awesome Project",
+    "description": "A revolutionary app...",
+    "techStack": "React, Node.js, MongoDB"
+  }'
+
+# 5. Update project status
+curl -X PUT http://localhost:3000/api/projects/PROJECT_ID \
+  -H 'Authorization: Bearer TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"status": "in-progress"}'
+```
+
+### JavaScript Example
+
+```javascript
+// Add interests
+const addInterests = async (interestIds) => {
+  const response = await fetch('/api/interests/my', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ interestIds })
   });
+  return await response.json();
 };
-```
 
-### Project Submission Form
-
-```typescript
+// Submit project
 const submitProject = async (projectData) => {
-  const response = await fetch('/api/projects/create', {
+  const response = await fetch('/api/projects', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(projectData)
   });
-  
-  const result = await response.json();
-  console.log('Project submitted:', result.project);
+  return await response.json();
+};
+
+// Get my projects
+const getMyProjects = async () => {
+  const response = await fetch('/api/projects/my', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  return data.data;
 };
 ```
 
 ---
 
-## 📈 Admin Dashboard Queries
+## Related Documentation
 
-```bash
-# Get interest statistics
-curl -X GET http://localhost:8000/api/interests/admin/stats \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-
-# Response:
-[
-  { "interestName": "Machine Learning", "userCount": 45 },
-  { "interestName": "Web Development", "userCount": 38 },
-  ...
-]
-
-# Get project statistics
-curl -X GET http://localhost:8000/api/projects/admin/stats \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-
-# Response:
-{
-  "total": 127,
-  "byStatus": [
-    { "status": "submitted", "count": 45 },
-    { "status": "approved", "count": 30 },
-    { "status": "featured", "count": 10 }
-  ],
-  "topContributors": [...]
-}
-```
+- [Users API](./USERS_API.md)
+- [AI API](./docs/AI_API.md)
+- [Main README](./README.md)
+- [Developer Guide](./docs/DEVELOPER_GUIDE.md)
 
 ---
 
-## 🔐 Permissions Summary
+## Support
 
-### Interests
-- **Students**: View all, manage own interests, find users by interest
-- **Admins**: Full CRUD on interests, view statistics
-
-### Projects
-- **Students**: 
-  - Create projects (status: "submitted")
-  - Update/delete own projects
-  - View all projects
-- **Admins**: 
-  - Create projects with any status
-  - Update/delete any project
-  - Change project status
-  - View statistics
-
----
-
-## 🚀 Key Features
-
-### Interests
-✅ First-time user onboarding
-✅ Interest-based user discovery
-✅ Dynamic interest management
-✅ Interest statistics for admins
-
-### Projects
-✅ Student project submissions
-✅ Admin can post featured projects
-✅ Multi-status workflow
-✅ Rich project data (problem/solution/tech stack)
-✅ GitHub integration
-✅ Image gallery support
-✅ Search and filtering
-✅ Project statistics
-
----
-
-## 📁 Files Created
-
-```
-Src/
-  Interests/
-    interests.service.ts      (14 functions)
-    interests.controller.ts   (13 endpoints)
-    interests.routes.ts       (13 routes)
-  Projects/
-    projects.service.ts       (12 functions)
-    projects.controller.ts    (10 endpoints)
-    projects.routes.ts        (12 routes)
-```
-
-Routes registered in `Src/app.ts`:
-- `/api/interests/*`
-- `/api/projects/*`
-
----
-
-## 🎯 Critical Implementation Notes
-
-1. **Interest Selection**: Check `/my/check` endpoint on every student login
-2. **Admin Project Posting**: Admins can create projects with `status: "featured"` directly
-3. **Ownership**: Students can only edit/delete their own projects (admins can edit any)
-4. **Audit Logging**: All CREATE/UPDATE/DELETE operations are logged
-5. **No Soft Delete**: Projects use hard delete (can implement soft delete if needed)
-
----
-
-All endpoints are fully documented with Swagger! 🎉
+For questions or issues:
+- Swagger Documentation: http://localhost:3000/api-docs
+- GitHub Issues: [Report a bug](https://github.com)
+- Email: admin@bitsa.com
