@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch ./Src/server.ts",
     "build": "tsc",
-    "start": "node ./dist/src/server.js",
+    "clean": "rm -rf dist && find Src -name '*.js' -type f -delete && find Src -name '*.js.map' -type f -delete",
+    "start": "node ./dist/server.js",
     "gen": "drizzle-kit generate",
     "migrate": " tsx src/drizzle/migrate.ts",
     "studio": "drizzle-kit studio",
@@ -20,7 +21,9 @@
   "packageManager": "pnpm@10.13.1",
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "@types/cookie-parser": "^1.4.10",
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "drizzle-kit": "^0.31.7",
     "drizzle-orm": "^0.44.7",

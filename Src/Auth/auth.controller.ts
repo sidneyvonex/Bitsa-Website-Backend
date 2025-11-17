@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { createUserService, getUserByEmailService, getUserByIdService, updateEmailVerificationService, storePasswordResetTokenService, getUserByResetTokenService, updateUserPasswordService, storeEmailVerificationTokenService, getUserByVerificationTokenService, generateSecureToken } from "./auth.service";
+import { createUserService, getUserByEmailService, getUserByIdService, updateEmailVerificationService, storePasswordResetTokenService, getUserByResetTokenService, updateUserPasswordService, storeEmailVerificationTokenService, getUserByVerificationTokenService, generateSecureToken, generateRefreshToken, storeRefreshTokenService, getUserByRefreshTokenService, revokeRefreshTokenService } from "./auth.service";
 import { loginValidator, userValidator } from "../Validation/user.validator";
 import { sendWelcomeEmail, sendPasswordResetEmail, sendAccountVerificationEmail } from "../Emails/emailService";
 import { getPasswordResetSuccessEmail, getEmailVerificationSuccessEmail } from "../Emails/emailTemplates";
@@ -98,7 +98,20 @@ export const loginUser = async (req: Request, res: Response) => {
         
         const secret = process.env.JWT_SECRET as string;
         const token = jwt.sign(payload, secret);
-        
+
+        // create refresh token and store it
+        const refreshToken = generateRefreshToken();
+        const refreshTokenExpiry = new Date(Date.now() + (7 * 24 * 3600 * 1000)); // 7 days
+        await storeRefreshTokenService(existingUser.schoolId, refreshToken, refreshTokenExpiry);
+
+        // Set refresh token in HTTP-only cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 3600 * 1000 // 7 days
+        });
+
         res.status(200).json({ 
             token, 
             userId: existingUser.schoolId, 
@@ -109,6 +122,58 @@ export const loginUser = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to login user" });
+    }
+}
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+    try {
+        // Read refresh token from HTTP-only cookie
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            res.status(400).json({ error: "Refresh token is required" });
+            return;
+        }
+
+        const user = await getUserByRefreshTokenService(refreshToken);
+        if (!user) {
+            res.status(401).json({ error: "Invalid refresh token" });
+            return;
+        }
+
+        if (user.refreshTokenExpiry && user.refreshTokenExpiry < new Date()) {
+            // revoke stored token
+            await revokeRefreshTokenService(user.schoolId);
+            res.status(401).json({ error: "Refresh token expired" });
+            return;
+        }
+
+        // generate new access token
+        const payload = {
+            userId: user.schoolId,
+            email: user.email,
+            fullName: `${user.firstName} ${user.lastName}`,
+            userRole: user.role,
+            exp: Math.floor(Date.now() / 1000) + (60 * 60),
+        };
+        const secret = process.env.JWT_SECRET as string;
+        const newToken = jwt.sign(payload, secret);
+
+        // rotate refresh token (optional but recommended)
+        const newRefreshToken = generateRefreshToken();
+        const newRefreshExpiry = new Date(Date.now() + (7 * 24 * 3600 * 1000));
+        await storeRefreshTokenService(user.schoolId, newRefreshToken, newRefreshExpiry);
+
+        // Set new refresh token in HTTP-only cookie
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 3600 * 1000
+        });
+
+        res.status(200).json({ token: newToken });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message || "Failed to refresh token" });
     }
 }
 
@@ -364,5 +429,29 @@ export const resendVerificationCode = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to resend verification code" });
+    }
+}
+
+export const logoutUser = async (req: Request, res: Response) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+        if (refreshToken) {
+            // Find user and revoke their refresh token
+            const user = await getUserByRefreshTokenService(refreshToken);
+            if (user) {
+                await revokeRefreshTokenService(user.schoolId);
+            }
+        }
+
+        // Clear the refresh token cookie
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
+
+        res.status(200).json({ message: "Logged out successfully" });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message || "Failed to logout" });
     }
 }

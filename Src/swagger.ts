@@ -37,6 +37,10 @@ const options ={
             {
                 url: "https://api.bitsa.com/api",
                 description: "Production server"
+            },
+            {
+                url: "https://glowing-space-happiness-g45gp564vrrpcw6v5-3000.app.github.dev/api",
+                description: "CodeSpace server"
             }
         ]
     },

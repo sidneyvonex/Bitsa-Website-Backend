@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
     createUser,
     loginUser,
+    refreshAccessToken,
+    logoutUser,
     adminCreateUser,
     forgotPassword,
     resetPassword,
@@ -55,6 +57,43 @@ authRouter.post('/auth/register', createUser)
  */
 
 authRouter.post('/auth/login', loginUser);
+
+authRouter.post('/auth/refresh', refreshAccessToken);
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     description: Exchange a valid refresh token (from HTTP-only cookie) for a new access token and rotated refresh token
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: New access token issued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Missing refresh token
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+
+authRouter.post('/auth/logout', logoutUser);
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     description: Revokes the refresh token and clears the HTTP-only cookie
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
 /**
  * @swagger
  * /auth/login:

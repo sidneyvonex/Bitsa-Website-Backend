@@ -57,6 +57,9 @@ export const users = pgTable("users", {
   verificationTokenExpiry: timestamp("verificationTokenExpiry"),
   resetToken: varchar("resetToken", { length: 255 }),
   resetTokenExpiry: timestamp("resetTokenExpiry"),
+  // refresh token for issuing new access tokens
+  refreshToken: varchar("refreshToken", { length: 255 }),
+  refreshTokenExpiry: timestamp("refreshTokenExpiry"),
   lastLogin: timestamp("lastLogin"),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),

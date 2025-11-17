@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import db from "../drizzle/db";
 import { TUserInsert, TUserSelect, users } from "../drizzle/schema";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 //Create a new user
 export const createUserService = async (user: TUserInsert): Promise<TUserSelect> => {
@@ -78,4 +79,31 @@ export const generateSecureToken = (): string => {
     const salt = bcrypt.genSaltSync(saltRounds);
     // Hash and sanitize to alphanumeric token
     return bcrypt.hashSync(randomString, salt).replace(/[^a-zA-Z0-9]/g, '').substring(0, 64);
+};
+
+// Generate a random refresh token (hex string)
+export const generateRefreshToken = (): string => {
+    return crypto.randomBytes(48).toString('hex'); // 96 chars
+};
+
+// Store refresh token for a user
+export const storeRefreshTokenService = async (schoolId: string, refreshToken: string, refreshTokenExpiry: Date): Promise<string> => {
+    await db.update(users).set({
+        refreshToken,
+        refreshTokenExpiry,
+    }).where(eq(users.schoolId, schoolId));
+    return "Refresh token stored successfully";
+};
+
+// Get user by refresh token
+export const getUserByRefreshTokenService = async (refreshToken: string): Promise<TUserSelect | undefined> => {
+    return await db.query.users.findFirst({
+        where: eq(users.refreshToken, refreshToken),
+    });
+};
+
+// Revoke refresh token (clear it)
+export const revokeRefreshTokenService = async (schoolId: string): Promise<string> => {
+    await db.update(users).set({ refreshToken: null, refreshTokenExpiry: null }).where(eq(users.schoolId, schoolId));
+    return "Refresh token revoked";
 };

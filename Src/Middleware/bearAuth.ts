@@ -110,7 +110,43 @@ export const authMiddleware = (requiredRole: 'admin' | 'user' | 'both') =>
 
 
 //Middleware to check if the User is an Admin || Member || Both
+export const authenticate = authMiddleware('both'); // Any authenticated user
 export const adminRoleAuth = authMiddleware('admin');
 export const memberRoleAuth = authMiddleware('user');
 export const bothRoleAuth = authMiddleware('both');
 
+// SuperAdmin-only middleware
+export const superAdminAuth = (req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+        res.status(401).json({ error: "Authorization header is missing or malformed" });
+        return;
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    if (!token) {
+        res.status(401).json({ error: "Token is missing from Authorization header" });
+        return;
+    }
+
+    if (!process.env.JWT_SECRET) {
+        console.error('JWT_SECRET environment variable is not set');
+        res.status(500).json({ error: "Server configuration error" });
+        return;
+    }
+
+    const decoded = verifyToken(token, process.env.JWT_SECRET);
+    if (!decoded) {
+        res.status(401).json({ error: "Invalid or expired token - Access denied." });
+        return;
+    }
+
+    if (decoded.userRole?.toLowerCase() !== 'superadmin') {
+        res.status(403).json({ error: "Access denied: SuperAdmin role required" });
+        return;
+    }
+
+    req.user = decoded;
+    next();
+};
