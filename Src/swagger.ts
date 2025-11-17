@@ -30,13 +30,14 @@ const options ={
             }
         ],
         servers:[
+
             {
+                url: "https://bitsabackendapi.azurewebsites.net/",
+                description: "Production server"
+            },
+                        {
                 url: "http://localhost:3000/api",
                 description: "Development server"
-            },
-            {
-                url: "https://api.bitsa.com/api",
-                description: "Production server"
             },
             {
                 url: "https://glowing-space-happiness-g45gp564vrrpcw6v5-3000.app.github.dev/api",
