@@ -9,6 +9,11 @@ import { interestsRouter } from './Interests/interests.routes';
 import { projectsRouter } from './Projects/projects.routes';
 import { blogsRouter } from './Blogs/blogs.routes';
 import { eventsRouter } from './Events/events.routes';
+import leadersRouter from './Leaders/leaders.routes';
+import communitiesRouter from './Communities/communities.routes';
+import partnersRouter from './Partners/partners.routes';
+import reportsRouter from './Reports/reports.routes';
+import aiRouter from './AI/ai.routes';
 
 const app: Application = express();
 
@@ -46,5 +51,10 @@ app.use('/api/interests', interestsRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/blogs', blogsRouter);
 app.use('/api/events', eventsRouter);
+app.use('/api/leaders', leadersRouter);
+app.use('/api/communities', communitiesRouter);
+app.use('/api/partners', partnersRouter);
+app.use('/api/reports', reportsRouter);
+app.use('/api/ai', aiRouter);
 
 export default app;

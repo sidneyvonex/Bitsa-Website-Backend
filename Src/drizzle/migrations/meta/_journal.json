@@ -43,6 +43,20 @@
       "when": 1763376653770,
       "tag": "0005_good_scarecrow",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1763384971091,
+      "tag": "0006_awesome_cyclops",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1763385337082,
+      "tag": "0007_tearful_harpoon",
+      "breakpoints": true
     }
   ]
 }

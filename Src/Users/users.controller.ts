@@ -4,6 +4,7 @@ import {
     getUserProfileService,
     getAllUsersService,
     updateUserProfileService,
+    updateUserLanguageService,
     updateUserRoleService,
     deactivateUserService,
     activateUserService,
@@ -352,6 +353,44 @@ export const updateBio = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to update bio" });
+    }
+};
+
+// Update user language preference (for topbar language switcher)
+export const updateLanguagePreference = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+        const { language } = req.body;
+        
+        if (!userId) {
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+        }
+        
+        const validLanguages = ["en", "sw", "fr", "id", "de", "es", "it", "pt", "ja"];
+        if (!language || !validLanguages.includes(language)) {
+            res.status(400).json({ 
+                error: `Invalid language. Must be one of: ${validLanguages.join(", ")}` 
+            });
+            return;
+        }
+        
+        const updatedUser = await updateUserLanguageService(userId, language);
+        
+        await logAuditEvent(
+            req,
+            "PROFILE_UPDATE",
+            `Updated language preference to ${language}`,
+            "User",
+            userId
+        );
+        
+        res.status(200).json({ 
+            message: "Language preference updated successfully", 
+            language: updatedUser.preferredLanguage
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message || "Failed to update language preference" });
     }
 };
 

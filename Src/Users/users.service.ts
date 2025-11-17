@@ -34,6 +34,7 @@ export const getUserProfileService = async (schoolId: string) => {
             isActive: true,
             profilePicture: true,
             bio: true,
+            preferredLanguage: true,
             emailVerified: true,
             lastLogin: true,
             createdAt: true,
@@ -135,6 +136,20 @@ export const updateUserProfileService = async (
     const [updated] = await db
         .update(users)
         .set({ ...safeUpdates, updatedAt: new Date() })
+        .where(eq(users.schoolId, schoolId))
+        .returning();
+    
+    return updated;
+};
+
+// Update user language preference (for topbar language switcher)
+export const updateUserLanguageService = async (
+    schoolId: string,
+    language: "en" | "sw" | "fr" | "id" | "de" | "es" | "it" | "pt" | "ja"
+) => {
+    const [updated] = await db
+        .update(users)
+        .set({ preferredLanguage: language, updatedAt: new Date() })
         .where(eq(users.schoolId, schoolId))
         .returning();
     

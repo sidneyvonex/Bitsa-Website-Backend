@@ -22,6 +22,18 @@ export const roleEnum = pgEnum("roleEnum", [
   "superadmin",
 ]);
 
+export const languageEnum = pgEnum("languageEnum", [
+  "en", // English
+  "sw", // Kiswahili (Swahili)
+  "fr", // Français (French)
+  "id", // Bahasa Indonesia (Indonesian)
+  "de", // Deutsch (German)
+  "es", // Español (Spanish)
+  "it", // Italiano (Italian)
+  "pt", // Português (Portuguese)
+  "ja", // 日本語 (Japanese)
+]);
+
 //
 // ────────────────────────────────────────────────
 // USERS TABLE
@@ -50,6 +62,8 @@ export const users = pgTable("users", {
 
   profilePicture: text("profilePicture"),
   bio: text("bio"),
+
+  preferredLanguage: languageEnum("preferredLanguage").default("en").notNull(),
 
   emailVerified: boolean("emailVerified").default(false).notNull(),
   // email verification & password reset
@@ -188,9 +202,34 @@ export const blogs = pgTable("blogs", {
 
   coverImage: text("coverImage"),
 
+  language: languageEnum("language").default("en").notNull(),
+
   authorId: uuid("authorId").references(() => users.id, {
     onDelete: "set null",
   }),
+
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+//
+// ────────────────────────────────────────────────
+// BLOG TRANSLATIONS
+// ────────────────────────────────────────────────
+//
+
+export const blogTranslations = pgTable("blogTranslations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  blogId: uuid("blogId")
+    .references(() => blogs.id, { onDelete: "cascade" })
+    .notNull(),
+
+  language: languageEnum("language").notNull(),
+
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull(),
+  content: text("content").notNull(),
 
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
@@ -217,11 +256,36 @@ export const events = pgTable("events", {
   latitude: varchar("latitude", { length: 50 }),
   longitude: varchar("longitude", { length: 50 }),
 
+  language: languageEnum("language").default("en").notNull(),
+
   createdBy: uuid("createdBy").references(() => users.id, {
     onDelete: "set null",
   }),
 
   createdAt: timestamp("createdAt").defaultNow(),
+});
+
+//
+// ────────────────────────────────────────────────
+// EVENT TRANSLATIONS
+// ────────────────────────────────────────────────
+//
+
+export const eventTranslations = pgTable("eventTranslations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  eventId: uuid("eventId")
+    .references(() => events.id, { onDelete: "cascade" })
+    .notNull(),
+
+  language: languageEnum("language").notNull(),
+
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  locationName: varchar("locationName", { length: 255 }).notNull(),
+
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
 });
 
 //
@@ -275,11 +339,35 @@ export const reports = pgTable("reports", {
 
   fileUrl: text("fileUrl"),
 
+  language: languageEnum("language").default("en").notNull(),
+
   createdBy: uuid("createdBy").references(() => users.id, {
     onDelete: "set null",
   }),
 
   createdAt: timestamp("createdAt").defaultNow(),
+});
+
+//
+// ────────────────────────────────────────────────
+// REPORT TRANSLATIONS
+// ────────────────────────────────────────────────
+//
+
+export const reportTranslations = pgTable("reportTranslations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  reportId: uuid("reportId")
+    .references(() => reports.id, { onDelete: "cascade" })
+    .notNull(),
+
+  language: languageEnum("language").notNull(),
+
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
 });
 
 // -------------------------
@@ -314,9 +402,17 @@ export type TCommunitySelect = typeof communities.$inferSelect;
 export type TBlogInsert = typeof blogs.$inferInsert;
 export type TBlogSelect = typeof blogs.$inferSelect;
 
+// 7b. Blog Translations
+export type TBlogTranslationInsert = typeof blogTranslations.$inferInsert;
+export type TBlogTranslationSelect = typeof blogTranslations.$inferSelect;
+
 // 8. Events
 export type TEventInsert = typeof events.$inferInsert;
 export type TEventSelect = typeof events.$inferSelect;
+
+// 8b. Event Translations
+export type TEventTranslationInsert = typeof eventTranslations.$inferInsert;
+export type TEventTranslationSelect = typeof eventTranslations.$inferSelect;
 
 // 9. Gallery
 export type TGalleryInsert = typeof gallery.$inferInsert;
@@ -329,6 +425,10 @@ export type TPartnerSelect = typeof partners.$inferSelect;
 // 11. Reports
 export type TReportInsert = typeof reports.$inferInsert;
 export type TReportSelect = typeof reports.$inferSelect;
+
+// 11b. Report Translations
+export type TReportTranslationInsert = typeof reportTranslations.$inferInsert;
+export type TReportTranslationSelect = typeof reportTranslations.$inferSelect;
 
 //
 // ────────────────────────────────────────────────

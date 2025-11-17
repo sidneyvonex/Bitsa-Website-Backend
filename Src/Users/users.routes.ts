@@ -11,6 +11,7 @@ import {
     deleteUser,
     updateProfilePicture,
     updateBio,
+    updateLanguagePreference,
     getUsersByRole,
     getUsersByMajor,
     searchUsers,
@@ -125,6 +126,34 @@ usersRouter.put('/users/me/bio', authenticate, updateBio);
  *     responses:
  *       200:
  *         description: Bio updated successfully
+ */
+
+usersRouter.put('/users/me/language', authenticate, updateLanguagePreference);
+/**
+ * @swagger
+ * /users/me/language:
+ *   put:
+ *     summary: Update language preference
+ *     description: Updates the authenticated user's preferred language (for topbar switcher)
+ *     security:
+ *       - bearerAuth: []
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               language:
+ *                 type: string
+ *                 enum: [en, sw, fr, id, de, es, it, pt, ja]
+ *                 description: Language code (en=English, sw=Kiswahili, fr=Français, id=Bahasa Indonesia, de=Deutsch, es=Español, it=Italiano, pt=Português, ja=日本語)
+ *     responses:
+ *       200:
+ *         description: Language preference updated successfully
+ *       400:
+ *         description: Invalid language code
  */
 
 usersRouter.get('/users/search', authenticate, searchUsers);
