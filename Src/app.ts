@@ -20,7 +20,8 @@ const app: Application = express();
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
   'https://scaling-train-4jgxrg6jpv952q954-5173.app.github.dev'
 ];
 
