@@ -27,8 +27,6 @@ export const projectsRouter = Router();
  *   get:
  *     summary: Get all projects (paginated, searchable, filterable)
  *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -66,7 +64,7 @@ export const projectsRouter = Router();
  *       200:
  *         description: List of projects with pagination
  */
-projectsRouter.get("/", authenticate, getAllProjects);
+projectsRouter.get("/", getAllProjects);
 
 /**
  * @swagger
@@ -75,8 +73,6 @@ projectsRouter.get("/", authenticate, getAllProjects);
  *     summary: Get featured/approved projects
  *     description: Showcases best projects (approved or featured status)
  *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: limit
@@ -87,7 +83,7 @@ projectsRouter.get("/", authenticate, getAllProjects);
  *       200:
  *         description: List of featured projects
  */
-projectsRouter.get("/featured", authenticate, getFeaturedProjects);
+projectsRouter.get("/featured", getFeaturedProjects);
 
 /**
  * @swagger
@@ -95,8 +91,6 @@ projectsRouter.get("/featured", authenticate, getFeaturedProjects);
  *   get:
  *     summary: Get project by ID
  *     tags: [Projects]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -109,7 +103,7 @@ projectsRouter.get("/featured", authenticate, getFeaturedProjects);
  *       404:
  *         description: Project not found
  */
-projectsRouter.get("/:id", authenticate, getProjectById);
+projectsRouter.get("/:id", getProjectById);
 
 //
 // ────────────────────────────────────────────────────────────
