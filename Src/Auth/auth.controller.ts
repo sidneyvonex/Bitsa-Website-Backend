@@ -99,6 +99,18 @@ export const loginUser = async (req: Request, res: Response) => {
             return;
         }
 
+        // Check if email is verified
+        if (!existingUser.emailVerified) {
+            res.status(403).json({ 
+                error: "Email not verified",
+                message: "Please verify your email before logging in. Check your inbox for the verification link or request a new one.",
+                needsVerification: true,
+                email: existingUser.email,
+                schoolId: existingUser.schoolId
+            });
+            return;
+        }
+
         const payload = {
             userId: existingUser.schoolId,
             email: existingUser.email,
@@ -139,7 +151,9 @@ export const loginUser = async (req: Request, res: Response) => {
             email: existingUser.email, 
             fullName: `${existingUser.firstName} ${existingUser.lastName}`, 
             userRole: existingUser.role, 
-            profileUrl: existingUser.profilePicture 
+            profileUrl: existingUser.profilePicture,
+            emailVerified: existingUser.emailVerified,
+            // Note: Frontend should call /api/interests/my/check to determine if user needs to select interests
         });
     } catch (error: any) {
         res.status(500).json({ error: error.message || "Failed to login user" });
