@@ -16,7 +16,7 @@ export const createUser = async (req: Request, res: Response) => {
             return;
         }
         const { firstName, lastName, email, password, schoolId, schoolName, yearOfStudy, major } = req.body;
-        
+
         if (!firstName || !lastName || !email || !password || !schoolId || !major) {
             res.status(400).json({ error: "firstName, lastName, email, password, schoolId and major are required" });
             return;
@@ -101,7 +101,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
         // Check if email is verified
         if (!existingUser.emailVerified) {
-            res.status(403).json({ 
+            res.status(403).json({
                 error: "Email not verified",
                 message: "Please verify your email before logging in. Check your inbox for the verification link or request a new one.",
                 needsVerification: true,
@@ -118,7 +118,7 @@ export const loginUser = async (req: Request, res: Response) => {
             userRole: existingUser.role,
             exp: Math.floor(Date.now() / 1000) + (60 * 60),
         }
-        
+
         const secret = process.env.JWT_SECRET as string;
         const token = jwt.sign(payload, secret);
 
@@ -145,12 +145,12 @@ export const loginUser = async (req: Request, res: Response) => {
             { loginMethod: 'email-password' }
         );
 
-        res.status(200).json({ 
-            token, 
-            userId: existingUser.schoolId, 
-            email: existingUser.email, 
-            fullName: `${existingUser.firstName} ${existingUser.lastName}`, 
-            userRole: existingUser.role, 
+        res.status(200).json({
+            token,
+            userId: existingUser.schoolId,
+            email: existingUser.email,
+            fullName: `${existingUser.firstName} ${existingUser.lastName}`,
+            userRole: existingUser.role,
             profileUrl: existingUser.profilePicture,
             emailVerified: existingUser.emailVerified,
             // Note: Frontend should call /api/interests/my/check to determine if user needs to select interests
@@ -219,9 +219,9 @@ export const adminCreateUser = async (req: Request, res: Response) => {
             res.status(400).json({ error: parseResult.error.issues })
             return;
         }
-        
+
         const { firstName, lastName, email, password, schoolId, schoolName, yearOfStudy, userRole, major } = req.body;
-        
+
         if (!firstName || !lastName || !email || !password || !schoolId || !major) {
             res.status(400).json({ error: "firstName, lastName, email, password, schoolId and major are required" });
             return;
@@ -247,7 +247,7 @@ export const adminCreateUser = async (req: Request, res: Response) => {
 
         const requestedRole = (userRole || 'student').toLowerCase();
         const creatorRole = (req.user?.userRole || '').toLowerCase();
-        
+
         if (requestedRole === 'superadmin' && creatorRole !== 'superadmin') {
             res.status(403).json({ error: 'Only a superadmin can create a superadmin account' });
             return;
@@ -318,7 +318,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
     try {
         const { token, newPassword } = req.body;
-        
+
         if (!token || !newPassword) {
             res.status(400).json({ error: "Token and new password are required" });
             return;
@@ -471,7 +471,7 @@ export const logoutUser = async (req: Request, res: Response) => {
     try {
         const refreshToken = req.cookies?.refreshToken;
         const userId = req.user?.userId;
-        
+
         if (refreshToken) {
             // Find user and revoke their refresh token
             const user = await getUserByRefreshTokenService(refreshToken);
