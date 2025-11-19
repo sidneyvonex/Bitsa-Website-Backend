@@ -11,79 +11,145 @@ const groq = new Groq({
 const MODEL = "llama-3.3-70b-versatile";
 
 /**
+ * Helper function to detect if query is asking for general/all items
+ */
+const isGeneralQuery = (query: string): boolean => {
+  const generalPatterns = [
+    /what.*do you have/i,
+    /show.*all/i,
+    /list.*all/i,
+    /what.*are.*available/i,
+    /tell me about.*events/i,
+    /upcoming events/i,
+    /what events/i,
+    /what blogs/i,
+    /what projects/i,
+    /show me.*events/i,
+    /show me.*blogs/i,
+    /show me.*projects/i,
+  ];
+
+  return generalPatterns.some(pattern => pattern.test(query));
+};
+
+/**
  * Get relevant context from database based on user query
  */
 export const getContextFromDatabase = async (query: string): Promise<string> => {
   const searchTerm = `%${query.toLowerCase()}%`;
-  
-  // Search across all tables in parallel
+  const isGeneral = isGeneralQuery(query);
+
+  // For general queries, fetch more data; for specific queries, use search
   const [blogsData, eventsData, projectsData, leadersData, reportsData] = await Promise.all([
     // Search blogs
-    db.select({
-      type: sql<string>`'blog'`,
-      title: blogs.title,
-      content: blogs.content,
-      category: blogs.category,
-    })
-      .from(blogs)
-      .where(
-        or(
-          ilike(blogs.title, searchTerm),
-          ilike(blogs.content, searchTerm),
-          ilike(blogs.category, searchTerm)
+    isGeneral
+      ? db.select({
+        type: sql<string>`'blog'`,
+        title: blogs.title,
+        content: blogs.content,
+        category: blogs.category,
+        createdAt: blogs.createdAt,
+      })
+        .from(blogs)
+        .orderBy(desc(blogs.createdAt))
+        .limit(10)
+      : db.select({
+        type: sql<string>`'blog'`,
+        title: blogs.title,
+        content: blogs.content,
+        category: blogs.category,
+        createdAt: blogs.createdAt,
+      })
+        .from(blogs)
+        .where(
+          or(
+            ilike(blogs.title, searchTerm),
+            ilike(blogs.content, searchTerm),
+            ilike(blogs.category, searchTerm)
+          )
         )
-      )
-      .limit(5),
+        .limit(5),
 
     // Search events
-    db.select({
-      type: sql<string>`'event'`,
-      title: events.title,
-      description: events.description,
-      locationName: events.locationName,
-      startDate: events.startDate,
-    })
-      .from(events)
-      .where(
-        or(
-          ilike(events.title, searchTerm),
-          ilike(events.description, searchTerm),
-          ilike(events.locationName, searchTerm)
+    isGeneral
+      ? db.select({
+        type: sql<string>`'event'`,
+        title: events.title,
+        description: events.description,
+        locationName: events.locationName,
+        startDate: events.startDate,
+        endDate: events.endDate,
+      })
+        .from(events)
+        .orderBy(desc(events.startDate))
+        .limit(10)
+      : db.select({
+        type: sql<string>`'event'`,
+        title: events.title,
+        description: events.description,
+        locationName: events.locationName,
+        startDate: events.startDate,
+        endDate: events.endDate,
+      })
+        .from(events)
+        .where(
+          or(
+            ilike(events.title, searchTerm),
+            ilike(events.description, searchTerm),
+            ilike(events.locationName, searchTerm)
+          )
         )
-      )
-      .limit(5),
+        .limit(5),
 
     // Search projects
-    db.select({
-      type: sql<string>`'project'`,
-      title: projects.title,
-      description: projects.description,
-      status: projects.status,
-    })
-      .from(projects)
-      .where(
-        or(
-          ilike(projects.title, searchTerm),
-          ilike(projects.description, searchTerm)
+    isGeneral
+      ? db.select({
+        type: sql<string>`'project'`,
+        title: projects.title,
+        description: projects.description,
+        status: projects.status,
+      })
+        .from(projects)
+        .limit(10)
+      : db.select({
+        type: sql<string>`'project'`,
+        title: projects.title,
+        description: projects.description,
+        status: projects.status,
+      })
+        .from(projects)
+        .where(
+          or(
+            ilike(projects.title, searchTerm),
+            ilike(projects.description, searchTerm)
+          )
         )
-      )
-      .limit(5),
+        .limit(5),
 
     // Search leaders
-    db.select({
-      type: sql<string>`'leader'`,
-      fullName: leaders.fullName,
-      position: leaders.position,
-      academicYear: leaders.academicYear,
-    })
-      .from(leaders)
-      .where(
-        or(
-          ilike(leaders.fullName, searchTerm),
-          ilike(leaders.position, searchTerm)
+    isGeneral
+      ? db.select({
+        type: sql<string>`'leader'`,
+        fullName: leaders.fullName,
+        position: leaders.position,
+        academicYear: leaders.academicYear,
+      })
+        .from(leaders)
+        .limit(10)
+      : db.select({
+        type: sql<string>`'leader'`,
+        fullName: leaders.fullName,
+        position: leaders.position,
+        academicYear: leaders.academicYear,
+      })
+        .from(leaders)
+        .where(
+          or(
+            ilike(leaders.fullName, searchTerm),
+            ilike(leaders.position, searchTerm)
+          )
         )
-      )
-      .limit(5),
+        .limit(5),
 
     // Search reports
     db.select({
@@ -101,46 +167,70 @@ export const getContextFromDatabase = async (query: string): Promise<string> => 
       .limit(3),
   ]);
 
-  // Format context
-  let context = "BITSA Website Database Context:\n\n";
+  // Format context with clear data counts
+  let context = "=== REAL-TIME DATABASE DATA (CURRENT AS OF NOW) ===\n\n";
+
+  const totalResults = blogsData.length + eventsData.length + projectsData.length + leadersData.length + reportsData.length;
 
   if (blogsData.length > 0) {
-    context += "=== BLOGS ===\n";
+    context += `=== BLOGS (${blogsData.length} found) ===\n`;
     blogsData.forEach((blog: any) => {
-      context += `- ${blog.title} (Category: ${blog.category})\n  ${blog.content.substring(0, 200)}...\n\n`;
+      context += `📝 Title: ${blog.title}\n`;
+      context += `   Category: ${blog.category}\n`;
+      context += `   Date: ${blog.createdAt}\n`;
+      context += `   Content Preview: ${blog.content.substring(0, 200)}...\n\n`;
     });
+  } else {
+    context += "=== BLOGS ===\nNo blogs found in database.\n\n";
   }
 
   if (eventsData.length > 0) {
-    context += "=== EVENTS ===\n";
+    context += `=== EVENTS (${eventsData.length} found) ===\n`;
     eventsData.forEach((event: any) => {
-      context += `- ${event.title} at ${event.locationName}\n  ${event.description.substring(0, 150)}...\n  Date: ${event.startDate}\n\n`;
+      context += `📅 Event: ${event.title}\n`;
+      context += `   Location: ${event.locationName}\n`;
+      context += `   Start Date: ${event.startDate}\n`;
+      context += `   End Date: ${event.endDate}\n`;
+      context += `   Description: ${event.description.substring(0, 200)}...\n\n`;
     });
+  } else {
+    context += "=== EVENTS ===\nNo events found in database.\n\n";
   }
 
   if (projectsData.length > 0) {
-    context += "=== PROJECTS ===\n";
+    context += `=== PROJECTS (${projectsData.length} found) ===\n`;
     projectsData.forEach((project: any) => {
-      context += `- ${project.title} (Status: ${project.status})\n  ${project.description.substring(0, 150)}...\n\n`;
+      context += `🚀 Project: ${project.title}\n`;
+      context += `   Status: ${project.status}\n`;
+      context += `   Description: ${project.description.substring(0, 200)}...\n\n`;
     });
+  } else {
+    context += "=== PROJECTS ===\nNo projects found in database.\n\n";
   }
 
   if (leadersData.length > 0) {
-    context += "=== LEADERS ===\n";
+    context += `=== LEADERS (${leadersData.length} found) ===\n`;
     leadersData.forEach((leader: any) => {
-      context += `- ${leader.fullName} - ${leader.position} (${leader.academicYear})\n`;
+      context += `👤 ${leader.fullName} - ${leader.position} (${leader.academicYear})\n`;
     });
     context += "\n";
+  } else {
+    context += "=== LEADERS ===\nNo leaders found in database.\n\n";
   }
 
   if (reportsData.length > 0) {
-    context += "=== REPORTS ===\n";
+    context += `=== REPORTS (${reportsData.length} found) ===\n`;
     reportsData.forEach((report: any) => {
-      context += `- ${report.title}\n  ${report.content.substring(0, 150)}...\n\n`;
+      context += `📊 ${report.title}\n`;
+      context += `   Content Preview: ${report.content.substring(0, 150)}...\n\n`;
     });
+  } else {
+    context += "=== REPORTS ===\nNo reports found in database.\n\n";
   }
 
-  return context || "No relevant information found in the database.";
+  context += `\n=== TOTAL RESULTS: ${totalResults} items ===\n`;
+
+  return context;
 };
 
 /**
@@ -155,19 +245,26 @@ export const aiChatService = async (
 
   const systemPrompt = `You are an AI assistant for BITSA (BitSa Technology and Innovation Society), a tech club at the University of Eastern Africa, Baraton in Kenya.
 
-Your role is to help students, members, and visitors by answering questions about:
-- Blog posts and articles
-- Upcoming and past events
-- Student projects and submissions
-- Club leaders and their roles
-- Reports and documents
-- General information about BITSA
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. ALWAYS use ONLY the real-time database data provided below in the "Database Context" section
+2. NEVER make up or assume information that is not in the database context
+3. NEVER say "I need to check our database" - the data IS ALREADY PROVIDED BELOW
+4. NEVER suggest users to "check the website" or "contact leaders" for information that should be in the database
+5. If the database context shows "No events found" or "No blogs found", explicitly state "Currently, there are no [events/blogs/etc] in our database"
+6. Be specific and direct - cite actual titles, dates, and details from the database context
+7. If you don't have information because it's not in the database context, say: "I don't have that information in our current database"
 
-Use the provided database context to give accurate, helpful, and friendly responses. If you don't have enough information, say so politely.
+Your role is to provide ACCURATE, REAL-TIME information about:
+- Blog posts and articles (with titles, categories, dates)
+- Upcoming and past events (with titles, locations, dates, descriptions)
+- Student projects (with titles, status, descriptions)
+- Club leaders (with names, positions, academic years)
+- Reports and documents
+
+IMPORTANT: The database context below contains THE ACTUAL, CURRENT data. Use it directly. Count the items if asked "how many". List the specific titles and details.
 
 Always be encouraging and supportive, especially when discussing student projects and achievements.
 
-Database Context:
 ${context}`;
 
   const messages: any[] = [
@@ -179,11 +276,50 @@ ${context}`;
   const completion = await groq.chat.completions.create({
     model: MODEL,
     messages,
-    temperature: 0.7,
+    temperature: 0.5, // Lower temperature for more factual responses
     max_tokens: 1024,
   });
 
-  return completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+  const response = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+
+  // Validate response - reject if it contains phrases suggesting the AI isn't using real data
+  const invalidPhrases = [
+    "I need to check our database",
+    "I'd like to confirm",
+    "check our website",
+    "reach out to our club leaders",
+    "I recommend checking",
+    "for the most accurate information",
+    "I should check",
+    "let me verify"
+  ];
+
+  const containsInvalidPhrase = invalidPhrases.some(phrase =>
+    response.toLowerCase().includes(phrase.toLowerCase())
+  );
+
+  if (containsInvalidPhrase) {
+    // Regenerate with stricter prompt
+    const stricterMessages: any[] = [
+      {
+        role: "system",
+        content: `${systemPrompt}\n\nWARNING: Your previous response was rejected because you suggested checking external sources. YOU ALREADY HAVE ALL THE DATA in the database context above. Answer directly using ONLY that data.`
+      },
+      ...conversationHistory,
+      { role: "user", content: userMessage },
+    ];
+
+    const retryCompletion = await groq.chat.completions.create({
+      model: MODEL,
+      messages: stricterMessages,
+      temperature: 0.3,
+      max_tokens: 1024,
+    });
+
+    return retryCompletion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+  }
+
+  return response;
 };
 
 /**
@@ -233,7 +369,7 @@ Format your response as JSON:
   });
 
   const response = JSON.parse(completion.choices[0]?.message?.content || "{}");
-  
+
   // Generate slug from title
   const slug = response.title
     .toLowerCase()
@@ -377,7 +513,7 @@ Write entirely in ${languageNames[language]}.`;
  */
 export const aiSearchService = async (query: string): Promise<any> => {
   const context = await getContextFromDatabase(query);
-  
+
   const prompt = `Based on this search query: "${query}"
 
 And this database content:

@@ -402,7 +402,31 @@ Authorization: Bearer <admin-token>
 
 ### Powered by Groq
 
-The backend integrates **Groq AI** (Llama 3.3 70B) for intelligent features.
+The backend integrates **Groq AI** (Llama 3.3 70B) for intelligent features with **real-time database access**.
+
+### ✨ Real-Time Data Fetching
+
+The AI assistant now fetches **actual, real-time data** from your database and provides specific, accurate responses instead of generic placeholders.
+
+**Features:**
+- ✅ Queries database in real-time for every request
+- ✅ Returns actual titles, dates, locations, and descriptions
+- ✅ Automatically detects general vs. specific queries
+- ✅ Validates responses to prevent generic placeholders
+- ✅ Auto-retries if response quality is poor
+
+**See:** [docs/AI_REAL_TIME_DATA.md](docs/AI_REAL_TIME_DATA.md) for implementation details.
+
+**Test it:**
+```bash
+# Run automated tests
+./test-ai-realtime.sh
+
+# Or test manually
+curl -X POST http://localhost:3000/api/ai/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "What events do you have?"}'
+```
 
 ### AI Features
 
@@ -414,6 +438,8 @@ POST /api/ai/chat
   "conversationHistory": []
 }
 ```
+
+**Response:** Real-time data from your database with actual blog titles, categories, and content previews.
 
 #### 2. Smart Search
 ```bash
