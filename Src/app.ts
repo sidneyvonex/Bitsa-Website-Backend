@@ -23,7 +23,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
-  'https://bitsabackendapi.azurewebsites.net/',
+  'https://bitsabackendapi.azurewebsites.net',
   'https://scaling-train-4jgxrg6jpv952q954-5173.app.github.dev'
 ];
 
