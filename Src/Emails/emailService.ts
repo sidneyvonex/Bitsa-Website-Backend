@@ -4,10 +4,14 @@ import * as Templates from './emailTemplates';
 export interface EmailData {
     recipientEmail: string;
     recipientName: string;
+    verificationUrl?: string;
 }
 
 export const sendWelcomeEmail = async (emailData: EmailData) => {
-    const tpl = Templates.getWelcomeTemplate(emailData.recipientName);
+    if (!emailData.verificationUrl) {
+        throw new Error("Verification URL is required for welcome email.");
+    }
+    const tpl = Templates.getWelcomeTemplate(emailData.recipientName, emailData.verificationUrl);
     return sendEventEmail(emailData.recipientEmail, emailData.recipientName, tpl.subject, tpl.body);
 };
 
@@ -20,34 +24,34 @@ export const sendAccountVerificationEmail = async (emailData: EmailData, verifyU
 };
 
 export const sendBookingConfirmation = async (
-    emailData: EmailData, 
-    details: { 
-        eventTitle: string; 
-        venueName: string; 
-        date: string; 
-        time: string; 
-        quantity: number; 
-        total: number; 
-        bookingId: number 
+    emailData: EmailData,
+    details: {
+        eventTitle: string;
+        venueName: string;
+        date: string;
+        time: string;
+        quantity: number;
+        total: number;
+        bookingId: number
     }
 ) => {
     const tpl = Templates.getBookingConfirmationTemplate(
-        emailData.recipientName, 
-        details.eventTitle, 
-        details.venueName, 
-        details.date, 
-        details.time, 
-        details.quantity, 
-        details.total, 
+        emailData.recipientName,
+        details.eventTitle,
+        details.venueName,
+        details.date,
+        details.time,
+        details.quantity,
+        details.total,
         details.bookingId
     );
     return sendEventEmail(emailData.recipientEmail, emailData.recipientName, tpl.subject, tpl.body);
 };
 
 export const sendPaymentConfirmation = async (
-    emailData: EmailData, 
-    eventTitle: string, 
-    amount: number, 
+    emailData: EmailData,
+    eventTitle: string,
+    amount: number,
     transactionId: string
 ) => {
     const tpl = Templates.getPaymentConfirmationTemplate(emailData.recipientName, eventTitle, amount, transactionId);

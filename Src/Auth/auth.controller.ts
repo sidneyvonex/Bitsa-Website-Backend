@@ -44,6 +44,7 @@ export const createUser = async (req: Request, res: Response) => {
         const validMajors = ["Software Engineering", "Computer Science", "Networking", "Cybersecurity", "BBIT", "Data Science", "Other"];
         const isValidMajor = validMajors.includes(major);
 
+
         const newUser = await createUserService({
             schoolId,
             isInternal: false,
@@ -58,9 +59,20 @@ export const createUser = async (req: Request, res: Response) => {
             role: 'student',
         });
 
+        // Generate verification token and expiry
+        const { generateSecureToken, storeEmailVerificationTokenService } = require("./auth.service");
+        const verificationToken = generateSecureToken();
+        const verificationTokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+        await storeEmailVerificationTokenService(schoolId, verificationToken, verificationTokenExpiry);
+
+        // Build verification URL
+        const frontendUrl = process.env.FRONTEND_URL || "https://bitsa.club";
+        const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
         await sendWelcomeEmail({
             recipientEmail: email,
-            recipientName: `${firstName} ${lastName}`
+            recipientName: `${firstName} ${lastName}`,
+            verificationUrl
         });
 
         // Log user creation

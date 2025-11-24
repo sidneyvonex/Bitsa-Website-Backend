@@ -1,6 +1,6 @@
 export interface EmailTemplate {
-    subject: string;
-    body: string;
+  subject: string;
+  body: string;
 }
 
 const LOGO_URL = 'https://res.cloudinary.com/dbebjpzih/image/upload/v1763313841/WhatsApp_Image_2025-11-16_at_20.23.23_l4e9j8.jpg';
@@ -50,10 +50,10 @@ const getEmailFooter = () => `
   </div>
 `;
 
-export const getWelcomeTemplate = (name: string): EmailTemplate => {
-    return {
-        subject: `Welcome to BITSA, ${name}`,
-        body: `
+export const getWelcomeTemplate = (name: string, verificationUrl: string): EmailTemplate => {
+  return {
+    subject: `Welcome to BITSA, ${name}`,
+    body: `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; max-width:600px; margin:0 auto; padding:40px 20px; background:#ffffff;">
       <div style="text-align:center; margin-bottom:40px;">
         <img src="${LOGO_URL}" alt="BITSA Logo" style="width:140px; height:auto; max-width:100%; display:inline-block; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: contain;" />
@@ -69,7 +69,16 @@ export const getWelcomeTemplate = (name: string): EmailTemplate => {
         <p style="font-size:18px; line-height:1.6; color:#333; margin:0 0 12px 0;">Hi <strong>${name}</strong>,</p>
         <p style="font-size:16px; line-height:1.7; color:#555; margin:0;">Thank you for joining our community of IT students, developers, and tech enthusiasts. Your journey to building amazing things starts here.</p>
       </div>
-      
+
+      <div style="background:#fffbe6; border-left:4px solid #f7c948; border-radius:8px; padding:20px; margin:32px 0;">
+        <p style="font-size:16px; color:#b7791f; margin:0 0 12px 0;"><strong>Action Required:</strong></p>
+        <p style="font-size:15px; color:#555; margin:0 0 16px 0;">To complete your registration and access your account, please verify your email address. You will not be able to log in until your email is verified.</p>
+        <div style="text-align:center; margin:24px 0;">
+          <a href="${verificationUrl}" style="display:inline-block; padding:14px 36px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; text-decoration:none; border-radius:8px; font-weight:600; font-size:16px; letter-spacing:0.3px; box-shadow:0 4px 15px rgba(102, 126, 234, 0.2);">Verify Email Address</a>
+        </div>
+        <p style="font-size:13px; color:#888; margin:0;">If you did not sign up for BITSA, you can safely ignore this email.</p>
+      </div>
+
       <div style="margin:32px 0;">
         <h3 style="font-size:18px; font-weight:600; color:#333; margin:0 0 20px 0;">What's Available for You:</h3>
         <div style="display:grid; gap:16px;">
@@ -107,13 +116,13 @@ export const getWelcomeTemplate = (name: string): EmailTemplate => {
       ${getEmailFooter()}
     </div>
   `,
-    };
+  };
 };
 
 export const getPasswordResetTemplate = (name: string, resetUrl: string): EmailTemplate => {
-    return {
-        subject: `Password Reset Request - BITSA`,
-        body: `
+  return {
+    subject: `Password Reset Request - BITSA`,
+    body: `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; max-width:600px; margin:0 auto; padding:40px 20px; background:#ffffff;">
       <div style="text-align:center; margin-bottom:40px;">
         <img src="${LOGO_URL}" alt="BITSA Logo" style="width:120px; height:auto; max-width:100%; display:inline-block; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: contain;" />
@@ -151,13 +160,13 @@ export const getPasswordResetTemplate = (name: string, resetUrl: string): EmailT
       ${getEmailFooter()}
     </div>
   `,
-    };
+  };
 };
 
 export const getAccountVerificationTemplate = (name: string, verifyUrl: string): EmailTemplate => {
-    return {
-        subject: `Verify Your BITSA Account`,
-        body: `
+  return {
+    subject: `Verify Your BITSA Account`,
+    body: `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; max-width:600px; margin:0 auto; padding:40px 20px; background:#ffffff;">
       <div style="text-align:center; margin-bottom:40px;">
         <img src="${LOGO_URL}" alt="BITSA Logo" style="width:120px; height:auto; max-width:100%; display:inline-block; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: contain;" />
@@ -196,22 +205,22 @@ export const getAccountVerificationTemplate = (name: string, verifyUrl: string):
       ${getEmailFooter()}
     </div>
   `,
-    };
+  };
 };
 
 export const getBookingConfirmationTemplate = (
-    name: string,
-    eventTitle: string,
-    venueName: string,
-    date: string,
-    time: string,
-    quantity: number,
-    total: number,
-    bookingId: number
+  name: string,
+  eventTitle: string,
+  venueName: string,
+  date: string,
+  time: string,
+  quantity: number,
+  total: number,
+  bookingId: number
 ): EmailTemplate => {
-    return {
-        subject: `Booking Confirmed: ${eventTitle}`,
-        body: `
+  return {
+    subject: `Booking Confirmed: ${eventTitle}`,
+    body: `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; max-width:600px; margin:0 auto; padding:40px 20px; background:#ffffff;">
       <div style="text-align:center; margin-bottom:40px;">
         <img src="${LOGO_URL}" alt="BITSA Logo" style="width:120px; height:auto; max-width:100%; display:inline-block; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: contain;" />
@@ -283,18 +292,18 @@ export const getBookingConfirmationTemplate = (
       ${getEmailFooter()}
     </div>
   `,
-    };
+  };
 };
 
 export const getPaymentConfirmationTemplate = (
-    name: string, 
-    eventTitle: string, 
-    amount: number, 
-    transactionId: string
+  name: string,
+  eventTitle: string,
+  amount: number,
+  transactionId: string
 ): EmailTemplate => {
-    return {
-        subject: `Payment Confirmed: ${eventTitle}`,
-        body: `
+  return {
+    subject: `Payment Confirmed: ${eventTitle}`,
+    body: `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; max-width:600px; margin:0 auto; padding:40px 20px; background:#ffffff;">
       <div style="text-align:center; margin-bottom:40px;">
         <img src="${LOGO_URL}" alt="Bitsa Logo" style="width:120px; height:auto; max-width:100%; display:inline-block; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: contain;" />
@@ -335,13 +344,13 @@ export const getPaymentConfirmationTemplate = (
       </div>
     </div>
   `,
-    };
+  };
 };
 
 export const getPasswordResetSuccessEmail = (name: string): EmailTemplate => {
-    return {
-        subject: "Password Reset Successful",
-        body: `
+  return {
+    subject: "Password Reset Successful",
+    body: `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; max-width:600px; margin:0 auto; padding:40px 20px; background:#ffffff;">
       <div style="text-align:center; margin-bottom:40px;">
         <img src="${LOGO_URL}" alt="Bitsa Logo" style="width:120px; height:auto; max-width:100%; display:inline-block; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: contain;" />
@@ -371,13 +380,13 @@ export const getPasswordResetSuccessEmail = (name: string): EmailTemplate => {
       </div>
     </div>
   `,
-    };
+  };
 };
 
 export const getEmailVerificationSuccessEmail = (name: string): EmailTemplate => {
-    return {
-        subject: "Email Verified Successfully",
-        body: `
+  return {
+    subject: "Email Verified Successfully",
+    body: `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; max-width:600px; margin:0 auto; padding:40px 20px; background:#ffffff;">
       <div style="text-align:center; margin-bottom:40px;">
         <img src="${LOGO_URL}" alt="Bitsa Logo" style="width:120px; height:auto; max-width:100%; display:inline-block; border-radius:16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); object-fit: contain;" />
@@ -415,5 +424,5 @@ export const getEmailVerificationSuccessEmail = (name: string): EmailTemplate =>
       </div>
     </div>
   `,
-    };
+  };
 };
