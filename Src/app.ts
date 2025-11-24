@@ -24,8 +24,7 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://localhost:3000',
   'https://bitsabackendapi.azurewebsites.net',
-  'https://scaling-train-4jgxrg6jpv952q954-5173.app.github.dev',
-  'https://3ec69ad7-730f-42b6-a204-c50a6d7aa8dc-00-1oa67j3xrbep2.riker.replit.dev'
+  'https://d19ab62c-4bce-4a1a-88f3-38b978b4f839-00-j1x3c02mgfw5.spock.replit.dev'
 ];
 
 app.use(cors({
