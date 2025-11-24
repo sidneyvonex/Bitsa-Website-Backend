@@ -24,7 +24,8 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://localhost:3000',
   'https://bitsabackendapi.azurewebsites.net',
-  'https://d19ab62c-4bce-4a1a-88f3-38b978b4f839-00-j1x3c02mgfw5.spock.replit.dev:5000'
+  'https://d19ab62c-4bce-4a1a-88f3-38b978b4f839-00-j1x3c02mgfw5.spock.replit.dev:5000',
+  'https://ueabbitsa.netlify.app'
 ];
 
 app.use(cors({
